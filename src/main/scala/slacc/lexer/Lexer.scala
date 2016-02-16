@@ -164,6 +164,10 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
           
         }
         pos += 1
+        if (pos >= source.length - 1) {
+          eof = true 
+          return new Token(EOF)
+        }
         return new Token(BAD)
       } 
       }
