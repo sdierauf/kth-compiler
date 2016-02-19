@@ -43,6 +43,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
 
         var c = source.charAt(pos)
 
+        // Whitespace
         if (c.isSpaceChar) {
           var isWhiteSpace = true
           while (pos < source.length - 1 && isWhiteSpace){ // skip white space
@@ -59,6 +60,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
 
         }
 
+        // Comments
         if (c.equals('/')){
           pos += 1
           c = source.charAt(pos)
@@ -91,6 +93,8 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
           pos += 1
           new Token(simpleTokens(c)).setPos(f, pos)
         }
+
+        // Equals or assignment
         // cases where we have to look ahead
         if (c.equals('=') && pos < source.length() - 1){
           pos += 1
@@ -106,6 +110,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
           new Token(EQSIGN).setPos(f, pos)
         }
 
+        // && case
         if (c.equals('&')) {
           pos += 1
           c = source.charAt(pos)
@@ -116,6 +121,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
           }
         }
 
+        // || case
         if (c.equals('|')) {
           pos += 1
           c = source.charAt(pos)
@@ -126,6 +132,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
           }
         }
 
+        // Variable name (aka ID) or keyword case
         var possibleToken = new StringBuilder()
         if (c.isLetter) {
           while (pos < source.length - 1 && c.isLetterOrDigit) {
@@ -141,6 +148,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
           }
         }
 
+        // Integer case
         if (c.isDigit) {
           while (pos < source.length - 1 && c.isDigit) {
             possibleToken.append(c)
@@ -150,6 +158,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
           new INTLIT(possibleToken.toInt).setPos(f, pos)
         }
 
+        // String literal case
         if (c.equals('"')) {
           pos += 1
           while (pos < source.length()) {
