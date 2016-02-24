@@ -35,8 +35,8 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
 
       def next : Token = {
         counter += 1
-        println("iteration " + counter)
-        println(pos)
+//        println("iteration " + counter)
+//        println(pos)
 
 //        if (!hasNext) throw new EndOfInput("reading" + f)
 
@@ -47,6 +47,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
         if (c.isSpaceChar) {
           var isWhiteSpace = true
           while (hasNext && isWhiteSpace){ // skip white space
+            println("whitespace")
             c = source.next
             pos = source.pos
             if (!c.isSpaceChar){
@@ -54,6 +55,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
             }
           }
           if (isWhiteSpace) { // we've reached the end of the file
+            println("whitespace eof")
             return new Token(EOF).setPos(f, pos)
           }
 
@@ -71,6 +73,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
           } else if (c.equals('*')) {
             var finished = false
             while (hasNext && !finished) {
+              println("while4")
               c = source.next
               pos = source.pos
               if (c.equals('*') && hasNext){ // have to look ahead
@@ -133,6 +136,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
         var possibleToken = new StringBuilder()
         if (c.isLetter) {
           while (hasNext && c.isLetterOrDigit) {
+            println("while1")
             possibleToken.append(c)
             c = source.next
             pos = source.pos
@@ -148,6 +152,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
 
         if (c.isDigit) {
           while (hasNext && c.isDigit) {
+            println("while2")
             possibleToken.append(c)
             c = source.next
             pos = source.pos
@@ -157,16 +162,22 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
 
         if (c.equals('"')) {
           while (hasNext) {
+            println("while3")
             c = source.next
             pos = source.pos
             if (c.equals('"')) {
-              return new STRLIT(possibleToken.toString).setPos(f, pos)
+              var t = pos
+              c = source.next
+              pos = source.pos
+              return new STRLIT(possibleToken.toString).setPos(f, t)
+            } else {
+              possibleToken.append(c)
             }
-            possibleToken.append(c)
           }
         }
 
         if (!hasNext) {
+          println("end eof")
           return new Token(EOF).setPos(f, pos)
         } else {
           c = source.next

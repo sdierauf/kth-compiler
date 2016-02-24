@@ -1,5 +1,4 @@
 if (1 + x == 10) {
-  println("Hello world.") 
-} else { 
+  println("Hello world.") } else {
   x = x + 1 // This is a comment 
 }
