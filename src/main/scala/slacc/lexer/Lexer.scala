@@ -168,8 +168,13 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
 
         if (!hasNext) {
           return new Token(EOF).setPos(f, pos)
+        } else {
+          c = source.next
+          pos = source.pos
+          next
         }
-        return new Token(BAD).setPos(f, pos)
+
+//        return new Token(BAD).setPos(f, pos)
       }
     }
 
