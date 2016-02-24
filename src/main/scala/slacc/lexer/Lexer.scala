@@ -27,9 +27,18 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
     new Iterator[Token] {
       var c = source.next
       var pos = source.pos
+      var tempPos = pos
 
       def hasNext : Boolean = {
         source.hasNext
+      }
+
+      def safeInc: Unit = {
+        tempPos = pos
+        if (hasNext) {
+          c = source.next
+          pos = source.pos
+        }
       }
 
       def next : Token = {
@@ -38,86 +47,75 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
         if (c.isSpaceChar) {
           var isWhiteSpace = true
           while (hasNext && isWhiteSpace){ // skip white space
-            c = source.next
-            pos = source.pos
+            safeInc
             if (!c.isSpaceChar){
               isWhiteSpace = false
             }
           }
           if (isWhiteSpace) { // we've reached the end of the file
-            return new Token(EOF).setPos(f, pos)
+            return new Token(EOF).setPos(f, tempPos)
           }
 
         }
 
         if (c.equals('/')){
-          c = source.next
-          pos = source.pos
+          safeInc
           if (c.equals('/')) {
             while (hasNext && !c.equals('\n')) {
               // single line comment case
-              c = source.next
-              pos = source.pos
+              safeInc
             }
           } else if (c.equals('*')) {
             var finished = false
             while (hasNext && !finished) {
-              c = source.next
-              pos = source.pos
+              safeInc
               if (c.equals('*') && hasNext){ // have to look ahead
-                c = source.next
-                pos = source.pos
+                safeInc
                 if (c.equals('/')){
                   finished = true
                 }
               }
             }
           } else {
-            return new Token(DIV).setPos(f, pos)
+            return new Token(DIV).setPos(f, tempPos)
           }
         }
 
         // simple punctuation type stuff
         if (simpleTokens.contains(c)) {
           var t = c
-          c = source.next
-          pos = source.pos
-          return new Token(simpleTokens(t)).setPos(f, pos)
+          safeInc
+          return new Token(simpleTokens(t)).setPos(f, tempPos)
         }
         // cases where we have to look ahead
         if (c.equals('=') && hasNext) {
-          c = source.next
-          pos = source.pos
+          safeInc
           if (c.equals('=')) {
-            c = source.next
-            pos = source.pos
-            return new Token(EQUALS).setPos(f, pos)
+            safeInc
+            return new Token(EQUALS).setPos(f, tempPos)
           } else {
-            return new Token(EQSIGN).setPos(f, pos)
+            return new Token(EQSIGN).setPos(f, tempPos)
           }
         } else if (c.equals('=')) {
-          c = source.next
-          pos = source.pos
-          return new Token(EQSIGN).setPos(f, pos)
+          safeInc
+          return new Token(EQSIGN).setPos(f, tempPos)
         }
 
         if (c.equals('&')) {
-          c = source.next
-          pos = source.pos
+          safeInc
           if (c.equals('&')){
-            return new Token(AND).setPos(f, pos)
+            return new Token(AND).setPos(f, tempPos)
           } else {
-            return new Token(BAD).setPos(f, pos)
+            return new Token(BAD).setPos(f, tempPos)
           }
         }
 
         if (c.equals('|')) {
-          c = source.next
-          pos = source.pos
+          safeInc
           if (c.equals('|')) {
-            return new Token(OR).setPos(f, pos)
+            return new Token(OR).setPos(f, tempPos)
           } else {
-            return new Token(BAD).setPos(f, pos)
+            return new Token(BAD).setPos(f, tempPos)
           }
         }
 
@@ -125,36 +123,31 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
         if (c.isLetter) {
           while (hasNext && c.isLetterOrDigit) {
             possibleToken.append(c)
-            c = source.next
-            pos = source.pos
+            safeInc
           }
           if (!keywords.contains(possibleToken.toString)){
-            c = source.next
-            pos = source.pos
-            return new ID(possibleToken.toString).setPos(f, pos)
+            safeInc
+            return new ID(possibleToken.toString).setPos(f, tempPos)
           } else {
-            return new Token(keywords(possibleToken.toString)).setPos(f, pos)
+            return new Token(keywords(possibleToken.toString)).setPos(f, tempPos)
           }
         }
 
         if (c.isDigit) {
           while (hasNext && c.isDigit) {
             possibleToken.append(c)
-            c = source.next
-            pos = source.pos
+            safeInc
           }
-          return new INTLIT(possibleToken.toInt).setPos(f, pos)
+          return new INTLIT(possibleToken.toInt).setPos(f, tempPos)
         }
 
         if (c.equals('"')) {
           while (hasNext) {
-            c = source.next
-            pos = source.pos
+            safeInc
             if (c.equals('"')) {
               var t = pos
-              c = source.next
-              pos = source.pos
-              return new STRLIT(possibleToken.toString).setPos(f, t)
+              safeInc
+              return new STRLIT(possibleToken.toString).setPos(f, tempPos)
             } else {
               possibleToken.append(c)
             }
@@ -162,12 +155,12 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
         }
 
         if (!hasNext) {
-          return new Token(EOF).setPos(f, pos)
-        } else {
-          c = source.next
-          pos = source.pos
-          next
+          return new Token(EOF).setPos(f, tempPos)
         }
+
+        // somehow nothing happened?
+        safeInc
+        next
 
       }
     }
