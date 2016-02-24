@@ -38,15 +38,15 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
         println("iteration " + counter)
         println(pos)
 
-        if (!hasNext) throw new EndOfInput("reading" + f)
+//        if (!hasNext) throw new EndOfInput("reading" + f)
 
-        if (pos > source.length - 1) { // check if end of file
+        if (!hasNext) { // check if end of file
           return new Token(EOF).setPos(f, pos)
         }
 
         if (c.isSpaceChar) {
           var isWhiteSpace = true
-          while (pos < source.length - 1 && isWhiteSpace){ // skip white space
+          while (hasNext && isWhiteSpace){ // skip white space
             c = source.next
             pos = source.pos
             if (!c.isSpaceChar){
@@ -63,17 +63,17 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
           c = source.next
           pos = source.pos
           if (c.equals('/')) {
-            while (pos < source.length -1 && !c.equals('\n')) {
+            while (hasNext && !c.equals('\n')) {
               // single line comment case
               c = source.next
               pos = source.pos
             }
           } else if (c.equals('*')) {
             var finished = false
-            while (pos < source.length && !finished) {
+            while (hasNext && !finished) {
               c = source.next
               pos = source.pos
-              if (c.equals('*') && pos < source.length - 1){ // have to look ahead
+              if (c.equals('*') && hasNext){ // have to look ahead
                 c = source.next
                 pos = source.pos
                 if (c.equals('/')){
@@ -94,7 +94,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
           return new Token(simpleTokens(t)).setPos(f, pos)
         }
         // cases where we have to look ahead
-        if (c.equals('=') && pos < source.length - 1) {
+        if (c.equals('=') && hasNext) {
           c = source.next
           pos = source.pos
           if (c.equals('=')) {
@@ -132,7 +132,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
 
         var possibleToken = new StringBuilder()
         if (c.isLetter) {
-          while (pos < source.length - 1 && c.isLetterOrDigit) {
+          while (hasNext && c.isLetterOrDigit) {
             possibleToken.append(c)
             c = source.next
             pos = source.pos
@@ -147,7 +147,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
         }
 
         if (c.isDigit) {
-          while (pos < source.length - 1 && c.isDigit) {
+          while (hasNext && c.isDigit) {
             possibleToken.append(c)
             c = source.next
             pos = source.pos
@@ -156,7 +156,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
         }
 
         if (c.equals('"')) {
-          while (pos < source.length) {
+          while (hasNext) {
             c = source.next
             pos = source.pos
             if (c.equals('"')) {
