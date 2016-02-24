@@ -27,18 +27,12 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
     new Iterator[Token] {
       var c = source.next
       var pos = source.pos
-      var counter = 0
 
       def hasNext : Boolean = {
         source.hasNext
       }
 
       def next : Token = {
-        counter += 1
-//        println("iteration " + counter)
-//        println(pos)
-
-//        if (!hasNext) throw new EndOfInput("reading" + f)
 
         if (!hasNext) { // check if end of file
           return new Token(EOF).setPos(f, pos)
@@ -47,7 +41,6 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
         if (c.isSpaceChar) {
           var isWhiteSpace = true
           while (hasNext && isWhiteSpace){ // skip white space
-            println("whitespace")
             c = source.next
             pos = source.pos
             if (!c.isSpaceChar){
@@ -55,7 +48,6 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
             }
           }
           if (isWhiteSpace) { // we've reached the end of the file
-            println("whitespace eof")
             return new Token(EOF).setPos(f, pos)
           }
 
@@ -73,7 +65,6 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
           } else if (c.equals('*')) {
             var finished = false
             while (hasNext && !finished) {
-              println("while4")
               c = source.next
               pos = source.pos
               if (c.equals('*') && hasNext){ // have to look ahead
@@ -136,7 +127,6 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
         var possibleToken = new StringBuilder()
         if (c.isLetter) {
           while (hasNext && c.isLetterOrDigit) {
-            println("while1")
             possibleToken.append(c)
             c = source.next
             pos = source.pos
@@ -152,7 +142,6 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
 
         if (c.isDigit) {
           while (hasNext && c.isDigit) {
-            println("while2")
             possibleToken.append(c)
             c = source.next
             pos = source.pos
@@ -162,7 +151,6 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
 
         if (c.equals('"')) {
           while (hasNext) {
-            println("while3")
             c = source.next
             pos = source.pos
             if (c.equals('"')) {
@@ -177,7 +165,6 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
         }
 
         if (!hasNext) {
-          println("end eof")
           return new Token(EOF).setPos(f, pos)
         } else {
           c = source.next
