@@ -27,12 +27,16 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
     new Iterator[Token] {
       var c = source.next
       var pos = source.pos
+      var counter = 0
 
       def hasNext : Boolean = {
         source.hasNext
       }
 
       def next : Token = {
+        counter += 1
+        println("iteration " + counter)
+        println(pos)
 
         if (!hasNext) throw new EndOfInput("reading" + f)
 
