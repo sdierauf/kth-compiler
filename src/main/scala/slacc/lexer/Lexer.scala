@@ -33,10 +33,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
       }
 
       def next : Token = {
-
-        if (!hasNext) { // check if end of file
-          return new Token(EOF).setPos(f, pos)
-        }
+        // invariant: every case will increment c before the next loop
 
         if (c.isSpaceChar) {
           var isWhiteSpace = true
@@ -172,7 +169,6 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
           next
         }
 
-//        return new Token(BAD).setPos(f, pos)
       }
     }
 
