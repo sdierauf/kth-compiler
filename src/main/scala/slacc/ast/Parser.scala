@@ -190,7 +190,70 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       new Formal(tpe, id)
     }
 
-    def parseExpression : ExprTree = {
+
+    // only parses prefix expressions?
+    def parseExpression : ExprTree = currentToken.kind match {
+      case STRLITKIND => parseStringLiteral
+      case INTLITKIND => parseIntegerLiteral
+      case TRUE => parseTrue
+      case FALSE => parseFalse
+      case IDKIND => parseIdentifier
+      case SELF => parseSelf
+      case NEW => parseNew
+      case BANG => parseBang
+      case LPAREN => parseNestedExpression
+      case LBRACE => parseBlock
+      case IF => parseIf
+      case WHILE => parseWhile
+      case PRINTLN => parsePrintln
+      case STROF => parseStrOf
+    }
+
+    def parseStringLiteral: StringLit = {
+      ???
+    }
+
+    def parseIntegerLiteral: IntLit = {
+      ???
+    }
+
+    def parseTrue: True = {
+      ???
+    }
+
+    def parseFalse: False = {
+      ???
+    }
+
+    def parseSelf: Self = {
+      ???
+    }
+
+    def parseBang: Not = {
+      ???
+    }
+
+    def parseNestedExpression: ExprTree = {
+      ???
+    }
+
+    def parseIf: If = {
+      ???
+    }
+
+    def parseWhile: While = {
+      ???
+    }
+
+    def parsePrintln: Println = {
+      ???
+    }
+
+    def parseStrOf: Strof = {
+      ???
+    }
+    
+    def parseBlock: Block = {
       ???
     }
 
