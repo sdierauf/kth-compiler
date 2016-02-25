@@ -89,7 +89,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       }
       // Build up methods
       while (isFirstOfMethodDecl) {
-        methods = parseMethodDecl :: methods
+        methods = methods :+ parseMethodDecl
       }
       eat(RBRACE)
       new ClassDecl(id, parent, vars, methods)
@@ -208,21 +208,36 @@ object Parser extends Pipeline[Iterator[Token], Program] {
 
 
     // only parses prefix expressions?
-    def parseExpression : ExprTree = currentToken.kind match {
-      case STRLITKIND => parseStringLiteral
-      case INTLITKIND => parseIntegerLiteral
-      case TRUE => parseTrue
-      case FALSE => parseFalse
-      case IDKIND => parseIdentifier
-      case SELF => parseSelf
-      case NEW => parseNew
-      case BANG => parseBang
-      case LPAREN => parseNestedExpression
-      case LBRACE => parseBlock
-      case IF => parseIf
-      case WHILE => parseWhile
-      case PRINTLN => parsePrintln
-      case STROF => parseStrOf
+    def parseExpression : ExprTree = {
+      // set of things
+      // match on if in set
+      // sets have orders
+      // ctrl f priorities http://www.csc.kth.se/~phaller/compilers/lecture4.pdf
+      val lhs = currentToken.kind match {
+        case STRLITKIND => parseStringLiteral
+        case INTLITKIND => parseIntegerLiteral
+        case TRUE => parseTrue
+        case FALSE => parseFalse
+        case IDKIND => parseIdentifier
+        case SELF => parseSelf
+        case NEW => parseNew
+        case BANG => parseBang
+        case LPAREN => parseNestedExpression
+        case LBRACE => parseBlock
+        case IF => parseIf
+        case WHILE => parseWhile
+        case PRINTLN => parsePrintln
+        case STROF => parseStrOf
+      }
+
+//      while (leftAssociative.contains(currentToken.kind)) {
+//        currentToken.kind match {
+//
+//        }
+//      }
+//      if (rightAssociative.contains(currentToken.kind)) {
+//
+//      }
     }
 
     // terminal
