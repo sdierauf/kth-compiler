@@ -40,7 +40,13 @@ object Parser extends Pipeline[Iterator[Token], Program] {
     }
 
     def parseGoal: Program = {
-
+      var classes: List[ClassDecl] = List()
+      while (isFirstOfClassDecl) {
+        classes = classes :+ parseClassDecl
+      }
+      val main = parseMainMethod
+      eat(EOF)
+      new Program(main, classes)
     }
 
     def parseClassDecl: ClassDecl = {
@@ -64,7 +70,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       eat(LBRACE)
       // Build up vars
       while (isFirstOfVarDecl) {
-        vars = parseVarDecl :: vars
+        vars = vars :+ parseVarDecl
       }
       // Build up methods
       while (isFirstOfMethodDecl) {
@@ -75,7 +81,11 @@ object Parser extends Pipeline[Iterator[Token], Program] {
     }
 
     def parseMainMethod: MainMethod = {
-      ???
+      val main = parseMethodDecl
+      if (main.id != Identifier("main")) {
+        fatal("expected: main method not identified as 'main'")
+      }
+      new MainMethod(main)
     }
 
     def parseIdentifier: Identifier = {
@@ -102,10 +112,10 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       var args: List[Formal] = List()
       // build up args (which is a list of 'Formal's)
       if (isNextOfFormal) {
-        args = parseFormal :: args
+        args = args :+ parseFormal
         while (isComma) {
           eat(COMMA)
-          args = parseFormal :: args
+          args = args :+ parseFormal
         }
       }
       eat(RPAREN)
@@ -120,14 +130,23 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       // parse var declarations
       var vars: List[VarDecl] = List()
       while (isFirstOfVarDecl) {
-        vars = parseVarDecl :: vars
+        vars = vars :+ parseVarDecl
       }
 
       // parse Expressions
       var exprs: List[ExprTree] = List()
       if (isFirstOfExpression) {
-        exprs = 
+        exprs = parseExpression :: exprs
+        while(isSemicolon) {
+          eat(SEMICOLON)
+          exprs = parseExpression :: exprs
+        }
       }
+
+      // now watch me whip
+      // now watch me nae nae
+      val retExpr = exprs.head
+      exprs = exprs.tail.reverse
 
       new MethodDecl(retType, id, args, vars, exprs, retExpr)
     }
@@ -137,6 +156,13 @@ object Parser extends Pipeline[Iterator[Token], Program] {
     }
 
     def parseFormal: Formal = {
+      val id = parseIdentifier
+      eat(COLON)
+      val tpe = parseType
+      new Formal(tpe, id)
+    }
+
+    def parseExpression : ExprTree = {
       ???
     }
 
