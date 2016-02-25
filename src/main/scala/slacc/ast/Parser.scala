@@ -39,6 +39,21 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       fatal("expected: " + (kind::more.toList).mkString(" or ") + ", found: " + currentToken, currentToken)
     }
 
+    def getString(input: Token): String = {
+      input match {
+        case id: ID => id.value
+        case string: STRLIT => string.value
+        case _ => fatal("expected something that had a string value")
+      }
+    }
+
+    def getInt(input: Token): Integer = {
+      input match {
+        case number: INTLIT => number.value
+        case _ => fatal("expected something that had a number value")
+      }
+    }
+
     def parseGoal: Program = {
       var classes: List[ClassDecl] = List()
       while (isFirstOfClassDecl) {
@@ -91,8 +106,9 @@ object Parser extends Pipeline[Iterator[Token], Program] {
     def parseIdentifier: Identifier = {
       currentToken.kind match {
         case IDKIND => {
+          var id = new Identifier(getString(currentToken)) // how the fuck get the string?
           eat(IDKIND)
-          new Identifier(currentToken.value) // how the fuck get the string?
+          id
         }
         case _ => expected(IDKIND)
       }
@@ -211,14 +227,14 @@ object Parser extends Pipeline[Iterator[Token], Program] {
 
     // terminal
     def parseStringLiteral: StringLit = {
-      val value = currentToken.value
+      val value = getString(currentToken)
       eat(STRLITKIND)
       new StringLit(value)
     }
 
     // terminal
     def parseIntegerLiteral: IntLit = {
-      val value = currentToken.value
+      val value = getInt(currentToken)
       eat(INTLITKIND)
       new IntLit(value)
     }
@@ -240,82 +256,84 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       new Self()
     }
 
-    def parseNew: New = {
+    def parseNew: ExprTree = {
       eat(NEW)
       currentToken.kind match {
-        case INT =>  {
+        case INT => {
           eat(INT)
           eat(LBRACKET)
           val size = parseExpression
           eat(RBRACKET)
-          new NewIntArray(size) }
+          new NewIntArray(size)
+        }
         case _ => {
-          new New(Identifier(currentToken.value))
+          new New(Identifier(getString(currentToken)))
         }
       }
-
-      def parseBang: Not = {
-        eat(BANG)
-        val expr = parseExpression
-        new Not(expr)
-      }
-
-      def parseNestedExpression: ExprTree = {
-        eat(LPAREN)
-        val expr = parseExpression
-        eat(RPAREN)
-        expr
-      }
-
-      def parseIf: If = {
-        // if ( Expression ) Expression ( else Expression )?
-        eat(IF)
-        val testCondition = parseNestedExpression
-        val thenBody = parseExpression
-        var elseBody: Option[ExprTree] = None
-        if (currentToken.kind == ELSE) {
-          eat(ELSE)
-          elseBody = Some(parseExpression)
-        }
-        new If(testCondition, thenBody, elseBody)
-      }
-
-      def parseWhile: While = {
-        // while ( Expression ) Expression
-        eat(WHILE)
-        val testCondition = parseNestedExpression
-        val body = parseExpression
-        new While(testCondition, body)
-      }
-
-      def parsePrintln: Println = {
-        eat(PRINTLN)
-        val expr = parseNestedExpression
-        new Println(expr)
-      }
-
-      def parseStrOf: Strof = {
-        eat(STROF)
-        val expr = parseNestedExpression
-        new Strof(expr)
-      }
-
-      def parseBlock: Block = {
-        var exprList: List[ExprTree] = List()
-        eat(RBRACE)
-        val expr = parseExpression
-        exprList = exprList :+ expr
-        while (currentToken.kind == SEMICOLON) {
-          eat(SEMICOLON)
-          exprList = exprList :+ parseExpression
-        }
-        new Block(exprList)
-      }
-
-
-      readToken
-      val tree = parseGoal
-      terminateIfErrors
-      tree
     }
+
+    def parseBang: Not = {
+      eat(BANG)
+      val expr = parseExpression
+      new Not(expr)
+    }
+
+    def parseNestedExpression: ExprTree = {
+      eat(LPAREN)
+      val expr = parseExpression
+      eat(RPAREN)
+      expr
+    }
+
+    def parseIf: If = {
+      // if ( Expression ) Expression ( else Expression )?
+      eat(IF)
+      val testCondition = parseNestedExpression
+      val thenBody = parseExpression
+      var elseBody: Option[ExprTree] = None
+      if (currentToken.kind == ELSE) {
+        eat(ELSE)
+        elseBody = Some(parseExpression)
+      }
+      new If(testCondition, thenBody, elseBody)
+    }
+
+    def parseWhile: While = {
+      // while ( Expression ) Expression
+      eat(WHILE)
+      val testCondition = parseNestedExpression
+      val body = parseExpression
+      new While(testCondition, body)
+    }
+
+    def parsePrintln: Println = {
+      eat(PRINTLN)
+      val expr = parseNestedExpression
+      new Println(expr)
+    }
+
+    def parseStrOf: Strof = {
+      eat(STROF)
+      val expr = parseNestedExpression
+      new Strof(expr)
+    }
+
+    def parseBlock: Block = {
+      var exprList: List[ExprTree] = List()
+      eat(RBRACE)
+      val expr = parseExpression
+      exprList = exprList :+ expr
+      while (currentToken.kind == SEMICOLON) {
+        eat(SEMICOLON)
+        exprList = exprList :+ parseExpression
+      }
+      new Block(exprList)
+    }
+
+
+    readToken
+    val tree = parseGoal
+    terminateIfErrors
+    tree
   }
+}
