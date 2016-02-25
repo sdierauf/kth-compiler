@@ -90,7 +90,10 @@ object Parser extends Pipeline[Iterator[Token], Program] {
 
     def parseIdentifier: Identifier = {
       currentToken.kind match {
-        case IDKIND => new Identifier(currentToken.value) // how the fuck get the string?
+        case IDKIND => {
+          eat(IDKIND)
+          new Identifier(currentToken.value) // how the fuck get the string?
+        }
         case _ => expected(IDKIND)
       }
     }
