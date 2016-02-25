@@ -152,7 +152,32 @@ object Parser extends Pipeline[Iterator[Token], Program] {
     }
 
     def parseType: TypeTree = {
-      ???
+      currentToken.kind match {
+        case INT => {
+          eat(INT)
+          currentToken.kind match {
+            case LBRACKET => {
+              eat(LBRACKET)
+              eat(RBRACKET)
+              new IntArrayType
+            }
+            case _ =>
+              new IntType
+          }
+        }
+        case BOOLEAN => {
+          eat(BOOLEAN)
+          new BooleanType
+        }
+        case STRING => {
+          eat(STRING)
+          new StringType
+        }
+        case UNIT => {
+          eat(UNIT)
+          new UnitType
+        }
+      }
     }
 
     def parseFormal: Formal = {
