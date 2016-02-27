@@ -81,6 +81,7 @@ object Printer {
       case _ : BooleanType => "Bool"
       case _ : StringType => "String"
       case _ : UnitType => "Unit"
+      case _ => apply(t)
     }
   }
 
@@ -112,6 +113,7 @@ object Printer {
       case t: Assign => printAssign(t)
       case t: ArrayAssign => printArrayAssign(t)
       case t: Strof => printStrof(t)
+      case t: New => printNew(t)
     }
   }
 
