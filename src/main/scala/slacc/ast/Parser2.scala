@@ -164,13 +164,14 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       var exprs : List[ExprTree] = List()
       while (currentToken.kind != RBRACE) {
         val e = expr
-        exprs = exprs :+ e
+        exprs = e :: exprs
         if (currentToken.kind != RBRACE) {
           eat(SEMICOLON)
         }
       }
       eat(RBRACE)
-      val retExpr = exprs.reverse.head 
+      val retExpr = exprs.head // exprs currently reversed
+      exprs = exprs.tail.reverse // take everything but the 'first' expr, and reverse
       new MethodDecl(retType, ident, args, varDecls, exprs, retExpr)
     }
    
