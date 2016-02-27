@@ -105,7 +105,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
         if (currentToken.kind != RPAREN) {
           eat(COMMA)
         }
-        args = args::(new Formal(argType, argId)
+        args = args :+ (new Formal(argType, argId))
       }
       eat(RPAREN)
       eat(COLON)
@@ -114,19 +114,19 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       var varDecls : List[VarDecl] = List()
       while (currentToken.kind == VAR) {
         val v = varDecl
-        varDecls = varDecls::v
+        varDecls = varDecls :+ v
       }
       var exprs : List[ExprTree] = List()
       while (currentToken != RBRACE) {
         val e = expr
-        exprs = exprs::e
+        exprs = exprs :+ e
         if (currentToken.kind != RBRACE) {
           eat(SEMICOLON)
         }
       }
       eat(RBRACE)
       val retExpr = exprs.reverse.head // just grab the last expr off the list of exprs 
-      return new mainMethod(new methodDecl(retType, Identifier("main"), args, vars, exprs, retExpr)) 
+      new mainMethod(new methodDecl(retType, Identifier("main"), args, vars, exprs, retExpr))
     }
     
     def methodDecl: MethodDecl = {
@@ -145,7 +145,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
         if (currentToken.kind != RPAREN) {
           eat(COMMA)
         }
-        args = args::(new Formal(argType, argId)
+        args = args :+ (new Formal(argType, argId))
       }
       eat(RPAREN)
       eat(COLON)
@@ -154,12 +154,12 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       var varDecls : List[VarDecl] = List()
       while (currentToken.kind == VAR) {
         val v = varDecl
-        varDecls = varDecls::v
+        varDecls = varDecls :+ v
       }
       var exprs : List[ExprTree] = List()
       while (currentToken != RBRACE) {
         val e = expr
-        exprs = exprs::e
+        exprs = exprs :+ e
         if (currentToken.kind != RBRACE) {
           eat(SEMICOLON)
         }
@@ -186,12 +186,12 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       var variables : List[VarDecl] = List()
       while (currentToken.kind == VAR) {
         val v = varDecl
-        variables = variables::v
+        variables = variables :+ v
       }
       var methods : List[MethodDecl] = List()
       while (currentToken.kind == METHOD) {
         val m = methodDecl
-        methods = methods::m
+        methods = methods :+ m
       }
       eat(RBRACE)
     }
@@ -211,7 +211,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
            eat(LPAREN)
            while (currentToken.kind != RPAREN) {
               val a = orExpr
-              args = args::a
+              args = args :+ a
               if (currentToken.kind != RPAREN) eat(COMMA)
            }
            eat(RPAREN)
@@ -287,7 +287,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
         var expressions : List[ExprTree] = List()
         while (currentToken.kind != RBRACE) {
           val e = expr
-          expressions = expressions::e
+          expressions = expressions :+ e
           if (currentToken.kind != RBRACE) {
             eat(SEMICOLON)
           }
@@ -373,7 +373,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       var classes: List[ClassDecl] = List()
       while (currentToken.kind == CLASS) {
         val c = classDecl
-        classes = classes::c
+        classes = classes :+ c
       }
       
       val mainMethod = mainMethodDecl
