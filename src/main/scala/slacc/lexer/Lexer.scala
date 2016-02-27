@@ -125,8 +125,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
             possibleToken.append(c)
             safeInc
           }
-          if (!keywords.contains(possibleToken.toString)){
-            safeInc
+          if (!keywords.contains(possibleToken.toString)) {
             return new ID(possibleToken.toString).setPos(f, tempPos)
           } else {
             return new Token(keywords(possibleToken.toString)).setPos(f, tempPos)
