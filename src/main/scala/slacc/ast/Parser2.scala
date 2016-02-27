@@ -87,15 +87,15 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       eat(VAR)
       val ident = new Identifier(getString(currentToken))
       eat(COLON)
-      val varType = typeDecl;
+      val varType = typeDecl
       eat(SEMICOLON)
-      return new VarDecl(varType, ident)
+      new VarDecl(varType, ident)
     }
     
     def mainMethodDecl: MainMethod = { // special case of method declaration where id must eq main
       eat(METHOD)
       if (!getString(currentToken).equals("main")) {
-        fatal("expected: Main method to be called 'main'");
+        fatal("expected: Main method to be called 'main'")
       }
       eat(IDKIND) // i can do this?
       eat(LPAREN)
@@ -108,7 +108,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
         if (currentToken.kind != RPAREN) {
           eat(COMMA)
         }
-        args = args :+ (new Formal(argType, argId))
+        args = args :+ new Formal(argType, argId)
       }
       eat(RPAREN)
       eat(COLON)
@@ -120,7 +120,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
         varDecls = varDecls :+ v
       }
       var exprs : List[ExprTree] = List()
-      while (currentToken != RBRACE) {
+      while (currentToken.kind != RBRACE) {
         val e = expr
         exprs = exprs :+ e
         if (currentToken.kind != RBRACE) {
@@ -148,7 +148,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
         if (currentToken.kind != RPAREN) {
           eat(COMMA)
         }
-        args = args :+ (new Formal(argType, argId))
+        args = args :+ new Formal(argType, argId)
       }
       eat(RPAREN)
       eat(COLON)
@@ -160,7 +160,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
         varDecls = varDecls :+ v
       }
       var exprs : List[ExprTree] = List()
-      while (currentToken != RBRACE) {
+      while (currentToken.kind != RBRACE) {
         val e = expr
         exprs = exprs :+ e
         if (currentToken.kind != RBRACE) {
