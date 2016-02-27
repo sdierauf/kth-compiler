@@ -17,7 +17,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
   val keywords = Map(("class", CLASS), ("true", TRUE), ("false", FALSE), ("var", VAR), ("unit", UNIT),
     ("string", STRING), ("extends", EXTENDS), ("int", INT), ("boolean", BOOLEAN), ("while", WHILE),
     ("if", IF), ("else", ELSE), ("length", LENGTH), ("self", SELF), ("new", NEW), ("println", PRINTLN),
-    ("strOf", STROF))
+    ("strOf", STROF), ("method", METHOD))
 
   def run(ctx: Context)(f: File): Iterator[Token] = {
     val source = Source.fromFile(f)

@@ -1,0 +1,3 @@
+method Main() {
+    println("hello world");
+}

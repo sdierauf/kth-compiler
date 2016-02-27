@@ -95,7 +95,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
     def mainMethodDecl: MainMethod = { // special case of method declaration where id must eq main
       eat(METHOD)
       // i can do this? *you can now*
-      if (!getString(currentToken).equals("main")) {
+      if (!getString(currentToken).equals("Main")) {
         fatal("expected: Main method to be called 'main'")
       }
       eat(IDKIND)
@@ -287,14 +287,14 @@ object Parser extends Pipeline[Iterator[Token], Program] {
 
     def factor: ExprTree = {
       currentToken.kind match {
-        case INTLIT => {
+        case INTLITKIND => {
           val i = IntLit(getInt(currentToken))
-          eat(INTLIT)
+          eat(INTLITKIND)
           return i
         }
-        case STRLIT => {
+        case STRLITKIND => {
           val s = StringLit(getString(currentToken))
-          eat(STRLIT)
+          eat(STRLITKIND)
           return s
         }
         case LPAREN => {
