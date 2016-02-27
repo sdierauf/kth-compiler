@@ -92,14 +92,17 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       return new VarDecl(varType, ident)
     }
     
-    def mainMethodDecl: MethodDecl = { // special case of method declaration where id must eq main
+    def mainMethodDecl: MainMethod = { // special case of method declaration where id must eq main
       eat(METHOD)
-      eat(ID("main")) // i can do this? 
+      if (!getString(currentToken).equals("main")) {
+        fatal("expected: Main method to be called 'main'");
+      }
+      eat(IDKIND) // i can do this?
       eat(LPAREN)
       var args : List[Formal] = List()
-      while (currentToken.kind == ID) {
+      while (currentToken.kind == IDKIND) {
         val argId = Identifier(getString(currentToken))
-        eat(ID)
+        eat(IDKIND)
         eat(COLON)
         val argType = typeDecl
         if (currentToken.kind != RPAREN) {
@@ -126,7 +129,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       }
       eat(RBRACE)
       val retExpr = exprs.reverse.head // just grab the last expr off the list of exprs 
-      new mainMethod(new methodDecl(retType, Identifier("main"), args, vars, exprs, retExpr))
+      new MainMethod(new MethodDecl(retType, Identifier("main"), args, varDecls, exprs, retExpr))
     }
     
     def methodDecl: MethodDecl = {
