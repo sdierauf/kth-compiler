@@ -287,6 +287,16 @@ object Parser extends Pipeline[Iterator[Token], Program] {
 
     def factor: ExprTree = {
       currentToken.kind match {
+        case INTLIT => {
+          val i = IntLit(getInt(currentToken))
+          eat(INTLIT)
+          return i
+        }
+        case STRLIT => {
+          val s = StringLit(getString(currentToken))
+          eat(STRLIT)
+          return s
+        }
         case LPAREN => {
           eat(LPAREN)
           val e = expr
