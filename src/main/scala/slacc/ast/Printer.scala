@@ -17,35 +17,35 @@ object Printer {
     }
   }
 
-  def printProgram(t: Program): Unit = {
+  def printProgram(t: Program): String = {
     ???
   }
 
-  def printMainMethod(t: MainMethod) = {
+  def printMainMethod(t: MainMethod): String = {
     ???
   }
 
-  def printClassDecl(t: ClassDecl) = {
+  def printClassDecl(t: ClassDecl): String = {
     ???
   }
 
-  def printVarDecl(t: VarDecl) = {
+  def printVarDecl(t: VarDecl): String = {
     ???
   }
 
-  def printMethodDecl(t: MethodDecl) =  {
+  def printMethodDecl(t: MethodDecl): String =  {
     ???
   }
 
-  def printFormal(t: Formal) = {
+  def printFormal(t: Formal): String = {
     ???
   }
 
-  def printType(t: TypeTree) = {
+  def printType(t: TypeTree): String = {
     ???
   }
 
-  def printExpression(t: ExprTree) = {
+  def printExpression(t: ExprTree): String = {
     t match {
       case t: And => printAnd(t)
       case t: Or => printOr(t)
@@ -76,112 +76,112 @@ object Printer {
     }
   }
 
-  def printAnd(t: And): Unit = {
+  def printAnd(t: And): String = {
     ???
   }
 
-  def printOr(t: Or): Unit ={
+  def printOr(t: Or): String ={
     ???
   }
 
-  def printPlus(t: Plus): Unit ={
-
+  def printPlus(t: Plus): String = {
+    ???
   }
 
-  def printMinus(t: Minus): Unit ={
-
+  def printMinus(t: Minus): String ={
+    ???
   }
 
-  def printTimes(t: Times): Unit ={
-
+  def printTimes(t: Times): String ={
+    ???
   }
 
-  def printDiv(t: Div): Unit = {
-
+  def printDiv(t: Div): String = {
+    ???
   }
 
-  def printLessThan(t: LessThan): Unit = {
-
+  def printLessThan(t: LessThan): String = {
+    ???
   }
 
-  def printEquals(t: Equals): Unit ={
-
+  def printEquals(t: Equals): String ={
+    ???
   }
 
-  def printArrayRead(t: ArrayRead): Unit ={
-
+  def printArrayRead(t: ArrayRead): String ={
+    ???
   }
 
-  def printArrayLength(t: ArrayLength): Unit ={
-
+  def printArrayLength(t: ArrayLength): String ={
+    ???
   }
 
-  def printMethodCall(t: MethodCall): Unit = {
-
+  def printMethodCall(t: MethodCall): String = {
+    ???
   }
 
-  def printIntLit(t: IntLit): Unit ={
-
+  def printIntLit(t: IntLit): String ={
+    ???
   }
 
-  def printStringLit(t: StringLit): Unit ={
-
+  def printStringLit(t: StringLit): String ={
+    ???
   }
 
-  def printTrue(t: True): Unit = {
-
+  def printTrue(t: True): String = {
+    ???
   }
 
-  def printFalse(t: False): Unit = {
-
+  def printFalse(t: False): String = {
+    ???
   }
 
-  def printIdentifier(t: Identifier): Unit = {
-
+  def printIdentifier(t: Identifier): String = {
+    ???
   }
 
-  def printSelf(t: Self): Unit = {
-
+  def printSelf(t: Self): String = {
+    ???
   }
 
-  def printNewIntArray(t: NewIntArray): Unit = {
-
+  def printNewIntArray(t: NewIntArray): String = {
+    ???
   }
 
-  def printNew(t: New): Unit = {
-
+  def printNew(t: New): String = {
+    ???
   }
 
-  def printNot(t: Not): Unit = {
-
+  def printNot(t: Not): String = {
+    ???
   }
 
-  def printBlock(t: Block): Unit = {
-
+  def printBlock(t: Block): String = {
+    ???
   }
 
-  def printIf(t: If): Unit = {
-
+  def printIf(t: If): String = {
+    ???
   }
 
-  def printWhile(t: While): Unit = {
-
+  def printWhile(t: While): String = {
+    ???
   }
 
-  def printPrintln(t: Println): Unit = {
-
+  def printPrintln(t: Println): String = {
+    ???
   }
 
-  def printAssign(t: Assign): Unit = {
-
+  def printAssign(t: Assign): String = {
+    ???
   }
 
-  def printArrayAssign(t: ArrayAssign): Unit = {
-
+  def printArrayAssign(t: ArrayAssign): String = {
+    ???
   }
 
-   def printStrof(t: Strof): Unit = {
+  def printStrof(t: Strof): String = {
+    ???
+  }
 
-   }
-  
 }
