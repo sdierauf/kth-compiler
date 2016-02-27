@@ -53,26 +53,31 @@ object Parser extends Pipeline[Iterator[Token], Program] {
         case _ => fatal("expected something that had a number value")
       }
     }
-    
+
     def typeDecl: TypeTree = {
       // Type	::=	Int [ ] || Bool || Int || String || Unit || Identifier
-      if (currentToken.kind == INT) {
-        eat(INT)
-        if (currentToken.kind == LBRACKET) {
-         eat(LBRACKET) 
-         eat(RBRACKET)
-         return new IntArrayType()
+      currentToken.kind match {
+        case INT => {
+          eat(INT)
+          if (currentToken.kind == LBRACKET) {
+            eat(LBRACKET)
+            eat(RBRACKET)
+            return new IntArrayType()
+          }
+          new IntType()
         }
-        new IntType()
-      } else if (currentToken.kind == UNIT) {
-        eat(UNIT)
-        new UnitType()
-      } else if (currentToken.kind == BOOLEAN) {
-        eat(BOOLEAN)
-        new BooleanType()
-      } else if (currentToken.kind == STRING) {
-        eat(STRING)
-        new StringType() 
+        case UNIT => {
+          eat(UNIT)
+          new UnitType()
+        }
+        case BOOLEAN => {
+          eat(BOOLEAN)
+          new BooleanType()
+        }
+        case STRING => {
+          eat(STRING)
+          new StringType()
+        }
       }
     }
     
@@ -293,20 +298,20 @@ object Parser extends Pipeline[Iterator[Token], Program] {
         eat(BANG)
         val e = expr
         new Not(e)
-      } else if (currentToken.kind == ID) {
-        val id = getString(currentToken) 
-        eat(ID)
+      } else if (currentToken.kind == IDKIND) {
+        val id = getString(currentToken)
+        eat(IDKIND)
         if (currentToken.kind == LBRACKET) {
           eat(LBRACKET)
           val index = expr 
           eat(RBRACKET)
           eat(EQSIGN) 
           val assignment = expr 
-          new ArrayAssign(id, index, assignment) 
-        } else if (currentToken.kid == EQSIQN) {
+          new ArrayAssign(new Identifier(id), index, assignment)
+        } else if (currentToken.kind == EQSIGN) {
           eat(EQSIGN)
-          rhs = expr 
-          new Assign(id, rhs)
+          val rhs = expr
+          new Assign(new Identifier(id), rhs)
         } else {
           new Identifier(id) 
         }
@@ -337,7 +342,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
         val condition = expr
         eat(RPAREN)
         val thenBody = expr
-        val elseBody : Option[ExprTree] = None
+        var elseBody : Option[ExprTree] = None
         if (currentToken.kind == ELSE) {
           eat(ELSE)
           elseBody = Some(expr)
@@ -345,7 +350,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
         new If(condition, thenBody, elseBody)
       } else if (currentToken.kind == NEW) {
         eat(NEW)
-        val id = getString(currentToken)
+        val id = new Identifier(getString(currentToken))
         eat(LPAREN)
         eat(RPAREN)
         new New(id)
@@ -359,6 +364,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
         eat(FALSE)
         new False()
       }
+
     }
     
     def parseGoal: Program = {
