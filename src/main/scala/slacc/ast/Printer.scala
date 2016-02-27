@@ -157,8 +157,8 @@ object Printer {
 
   def printMethodCall(t: MethodCall): String = {
     var s = new StringBuilder(apply(t.obj) + " " + apply(t.meth) +"(")
-    val arg : List[String] = t.args.map(e => apply(e))
-    s ++= expressions.mkString(",")  
+    val argList : List[String] = t.args.map(e => apply(e))
+    s ++= argList.mkString(",")
     (s ++= ")").toString
   }
 
@@ -187,7 +187,7 @@ object Printer {
   }
 
   def printNewIntArray(t: NewIntArray): String = {
-    "new " + "Int[" + apply(t.size) "]"
+    "new " + "Int[" + apply(t.size) + "]"
   }
 
   def printNew(t: New): String = {
@@ -205,13 +205,17 @@ object Printer {
     (s ++= "}").toString
   }
 
-  def printIf(t: If): String = t.els match {
-    case Some(els) => {
-      elseBody = "else " + printExpression(ex)
-    } case None => {
-      elseBody = ""
+  def printIf(t: If): String = {
+    var elseBody: String = ""
+    t.els match {
+      case Some(els) => {
+        elseBody = "else " + apply(els)
+      }
+      case None => {
+        elseBody = ""
+      }
     }
-    "if (" + apply(t.expr) + ")" + apply(thn) + elseBody
+    "if (" + apply(t.expr) + ")" + apply(t.thn) + elseBody
   }
 
   def printWhile(t: While): String = {
