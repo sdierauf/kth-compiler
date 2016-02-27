@@ -112,8 +112,9 @@ object Parser extends Pipeline[Iterator[Token], Program] {
         args = args :+ new Formal(argType, argId)
       }
       eat(RPAREN)
-      eat(COLON)
-      val retType = typeDecl
+      // would a main method have a return type etc
+//      eat(COLON)
+      val retType = new UnitType()
       eat(LBRACE)
       var varDecls : List[VarDecl] = List()
       while (currentToken.kind == VAR) {
@@ -226,7 +227,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
           return new MethodCall(lhs, methodName, args)
         }
       }
-      fatal("expected: method name after dot")
+      lhs
     }
 
     def orExpr: ExprTree = {
