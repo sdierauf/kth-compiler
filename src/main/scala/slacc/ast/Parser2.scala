@@ -207,22 +207,23 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       while (currentToken.kind == DOT) {
         eat(DOT)
         if (currentToken.kind == LENGTH) {
-           return new ArrayLength(lhs)
-        } else if (currentToken.kind == ID) { // then we have a method call
-           val methodName = getString(currentToken)
-           eat(ID)
-           var args : List[ExprTree] = List()
-           eat(LPAREN)
-           while (currentToken.kind != RPAREN) {
-              val a = orExpr
-              args = args :+ a
-              if (currentToken.kind != RPAREN) eat(COMMA)
-           }
-           eat(RPAREN)
-           return new MethodCall(lhs, methodName, args)
+          return new ArrayLength(lhs)
+        } else if (currentToken.kind == IDKIND) {
+          // then we have a method call
+          val methodName = new Identifier(getString(currentToken))
+          eat(IDKIND)
+          var args: List[ExprTree] = List()
+          eat(LPAREN)
+          while (currentToken.kind != RPAREN) {
+            val a = orExpr
+            args = args :+ a
+            if (currentToken.kind != RPAREN) eat(COMMA)
+          }
+          eat(RPAREN)
+          return new MethodCall(lhs, methodName, args)
         }
       }
-      
+      fatal("expected: method name after dot")
     }
     
     def orExpr: ExprTree = {
