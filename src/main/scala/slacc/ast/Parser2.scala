@@ -136,13 +136,13 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       // MethodDeclaration	::=	method Identifier ( ( Identifier : Type ( , Identifier : Type )* )? ) : Type = { ( VarDeclaration )* Expression ( ; Expression )* }
       // case class MethodDecl(retType: TypeTree, id: Identifier, args: List[Formal], vars: List[VarDecl], exprs: List[ExprTree], retExpr: ExprTree) extends Tree {
       eat(METHOD)
-      val ident = new Identifier(currentToken.kind)
-      eat(ID)
+      val ident = new Identifier(getString(currentToken))
+      eat(IDKIND)
       eat(LPAREN)
       var args : List[Formal] = List()
-      while (currentToken.kind == ID) {
+      while (currentToken.kind == IDKIND) {
         val argId = Identifier(getString(currentToken))
-        eat(ID)
+        eat(IDKIND)
         eat(COLON)
         val argType = typeDecl
         if (currentToken.kind != RPAREN) {
@@ -169,7 +169,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       }
       eat(RBRACE)
       val retExpr = exprs.reverse.head 
-      return methodDecl(retType, ident, args, vars, exprs, retExpr) 
+      new MethodDecl(retType, ident, args, varDecls, exprs, retExpr)
     }
    
     def classDecl: ClassDecl = {
@@ -177,13 +177,13 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       // ClassDecl(id: Identifier, parent: Option[Identifier], vars: List[VarDecl], methods: List[MethodDecl]) extends Tree
       eat(CLASS)
       val classIdent = Identifier(getString(currentToken))
-      eat(ID)
+      eat(IDKIND)
       var inheritsFrom : Option[Identifier] = None
       if (currentToken.kind == LESSTHAN) {
         eat(LESSTHAN) 
         eat(COLON)
-        inheritsFrom = Some(getString(currentToken))
-        eat(ID)
+        inheritsFrom = Some(new Identifier(getString(currentToken)))
+        eat(IDKIND)
       }
       eat(LBRACE)
       var variables : List[VarDecl] = List()
@@ -197,6 +197,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
         methods = methods :+ m
       }
       eat(RBRACE)
+      new ClassDecl(classIdent, inheritsFrom, variables, methods)
     }
     
     def expr: ExprTree = { // think method calls should have lowest precedence 
