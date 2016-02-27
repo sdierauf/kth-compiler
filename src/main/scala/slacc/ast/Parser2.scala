@@ -319,9 +319,16 @@ object Parser extends Pipeline[Iterator[Token], Program] {
               eat(LBRACKET)
               val index = expr
               eat(RBRACKET)
-              eat(EQSIGN)
-              val assignment = expr
-              new ArrayAssign(new Identifier(id), index, assignment)
+              currentToken.kind match {
+                case EQSIGN => {
+                  eat(EQSIGN)
+                  val assignment = expr
+                  new ArrayAssign(new Identifier(id), index, assignment)
+                }
+                case _ => {
+                  new ArrayRead(new Identifier(id), index)
+                }
+              }
             }
             case EQSIGN => {
               eat(EQSIGN)
