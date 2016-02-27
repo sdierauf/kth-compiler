@@ -54,297 +54,363 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       }
     }
 
-    def parseGoal: Program = {
-      var classes: List[ClassDecl] = List()
-      while (isFirstOfClassDecl) {
-        classes = classes :+ parseClassDecl
-      }
-      val main = parseMainMethod
-      eat(EOF)
-      new Program(main, classes)
-    }
-
-    def parseClassDecl: ClassDecl = {
-      var vars: List[VarDecl] = List()
-      var methods: List[MethodDecl] = List()
-      eat(CLASS)
-      var id: Identifier = parseIdentifier
-      var parent: Option[Identifier] = null
-
-      // Check if class has parent
-      currentToken.kind match {
-        case LESSTHAN => {
-          // has parent
-          eat(LESSTHAN)
-          eat(COLON)
-          parent = Option(parseIdentifier)
-        }
-        case _ => parent = Option(null)
-      }
-
-      eat(LBRACE)
-      // Build up vars
-      while (isFirstOfVarDecl) {
-        vars = vars :+ parseVarDecl
-      }
-      // Build up methods
-      while (isFirstOfMethodDecl) {
-        methods = methods :+ parseMethodDecl
-      }
-      eat(RBRACE)
-      new ClassDecl(id, parent, vars, methods)
-    }
-
-    def parseMainMethod: MainMethod = {
-      val main = parseMethodDecl
-      if (main.id != Identifier("main")) {
-        fatal("expected: main method not identified as 'main'")
-      }
-      new MainMethod(main)
-    }
-
-    def parseIdentifier: Identifier = {
-      currentToken.kind match {
-        case IDKIND => {
-          var id = new Identifier(getString(currentToken)) // how the fuck get the string?
-          eat(IDKIND)
-          id
-        }
-        case _ => expected(IDKIND)
-      }
-    }
-
-    def parseVarDecl: VarDecl = {
-      eat(VAR)
-      val tpe: TypeTree = parseType
-      eat(COLON)
-      val id: Identifier = parseIdentifier
-      eat(SEMICOLON)
-      new VarDecl(tpe, id)
-    }
-
-    def parseMethodDecl: MethodDecl = {
-      eat(METHOD)
-      val id: Identifier = parseIdentifier
-
-      eat(LPAREN)
-      var args: List[Formal] = List()
-      // build up args (which is a list of 'Formal's)
-      if (isNextOfFormal) {
-        args = args :+ parseFormal
-        while (isComma) {
-          eat(COMMA)
-          args = args :+ parseFormal
-        }
-      }
-      eat(RPAREN)
-
-      // parse return type
-      eat(COLON)
-      val retType: TypeTree = parseType
-
-      eat(EQUALS)
-      eat(RBRACE)
-
-      // parse var declarations
-      var vars: List[VarDecl] = List()
-      while (isFirstOfVarDecl) {
-        vars = vars :+ parseVarDecl
-      }
-
-      // parse Expressions
-      var exprs: List[ExprTree] = List()
-      if (isFirstOfExpression) {
-        exprs = parseExpression :: exprs
-        while(isSemicolon) {
-          eat(SEMICOLON)
-          exprs = parseExpression :: exprs
-        }
-      }
-
-      // now watch me whip
-      // now watch me nae nae
-      val retExpr = exprs.head
-      exprs = exprs.tail.reverse
-
-      new MethodDecl(retType, id, args, vars, exprs, retExpr)
-    }
-
-    def parseType: TypeTree = {
+    def typeDecl: TypeTree = {
+      // Type	::=	Int [ ] || Bool || Int || String || Unit || Identifier
       currentToken.kind match {
         case INT => {
           eat(INT)
-          currentToken.kind match {
-            case LBRACKET => {
-              eat(LBRACKET)
-              eat(RBRACKET)
-              new IntArrayType
-            }
-            case _ =>
-              new IntType
+          if (currentToken.kind == LBRACKET) {
+            eat(LBRACKET)
+            eat(RBRACKET)
+            return new IntArrayType()
           }
-        }
-        case BOOLEAN => {
-          eat(BOOLEAN)
-          new BooleanType
-        }
-        case STRING => {
-          eat(STRING)
-          new StringType
+          new IntType()
         }
         case UNIT => {
           eat(UNIT)
-          new UnitType
+          new UnitType()
+        }
+        case BOOLEAN => {
+          eat(BOOLEAN)
+          new BooleanType()
+        }
+        case STRING => {
+          eat(STRING)
+          new StringType()
         }
       }
     }
 
-    def parseFormal: Formal = {
-      val id = parseIdentifier
+    def varDecl: VarDecl = {
+      // VarDeclaration	::=	var Identifier : Type ;
+      // VarDecl(tpe: TypeTree, id: Identifier)
+      eat(VAR)
+      val ident = new Identifier(getString(currentToken))
       eat(COLON)
-      val tpe = parseType
-      new Formal(tpe, id)
+      val varType = typeDecl
+      eat(SEMICOLON)
+      new VarDecl(varType, ident)
     }
 
-
-    // only parses prefix expressions?
-    def parseExpression : ExprTree = {
-      // set of things
-      // match on if in set
-      // sets have orders
-      // ctrl f priorities http://www.csc.kth.se/~phaller/compilers/lecture4.pdf
-      val lhs = currentToken.kind match {
-        case STRLITKIND => parseStringLiteral
-        case INTLITKIND => parseIntegerLiteral
-        case TRUE => parseTrue
-        case FALSE => parseFalse
-        case IDKIND => parseIdentifier
-        case SELF => parseSelf
-        case NEW => parseNew
-        case BANG => parseBang
-        case LPAREN => parseNestedExpression
-        case LBRACE => parseBlock
-        case IF => parseIf
-        case WHILE => parseWhile
-        case PRINTLN => parsePrintln
-        case STROF => parseStrOf
+    def mainMethodDecl: MainMethod = { // special case of method declaration where id must eq main
+      eat(METHOD)
+      // i can do this? *you can now*
+      if (!getString(currentToken).equals("main")) {
+        fatal("expected: Main method to be called 'main'")
       }
-
-//      while (leftAssociative.contains(currentToken.kind)) {
-//        currentToken.kind match {
-//
-//        }
-//      }
-//      if (rightAssociative.contains(currentToken.kind)) {
-//
-//      }
-    }
-
-    // terminal
-    def parseStringLiteral: StringLit = {
-      val value = getString(currentToken)
-      eat(STRLITKIND)
-      new StringLit(value)
-    }
-
-    // terminal
-    def parseIntegerLiteral: IntLit = {
-      val value = getInt(currentToken)
-      eat(INTLITKIND)
-      new IntLit(value)
-    }
-
-    // terminal
-    def parseTrue: True = {
-      eat(TRUE)
-      new True()
-    }
-
-    def parseFalse: False = {
-      eat(FALSE)
-      new False()
-    }
-
-    // terminal
-    def parseSelf: Self = {
-      eat(SELF)
-      new Self()
-    }
-
-    def parseNew: ExprTree = {
-      eat(NEW)
-      currentToken.kind match {
-        case INT => {
-          eat(INT)
-          eat(LBRACKET)
-          val size = parseExpression
-          eat(RBRACKET)
-          new NewIntArray(size)
-        }
-        case _ => {
-          new New(Identifier(getString(currentToken)))
-        }
-      }
-    }
-
-    def parseBang: Not = {
-      eat(BANG)
-      val expr = parseExpression
-      new Not(expr)
-    }
-
-    def parseNestedExpression: ExprTree = {
+      eat(IDKIND)
       eat(LPAREN)
-      val expr = parseExpression
+      var args : List[Formal] = List()
+      while (currentToken.kind == IDKIND) {
+        val argId = Identifier(getString(currentToken))
+        eat(IDKIND)
+        eat(COLON)
+        val argType = typeDecl
+        if (currentToken.kind != RPAREN) {
+          eat(COMMA)
+        }
+        args = args :+ new Formal(argType, argId)
+      }
       eat(RPAREN)
-      expr
-    }
-
-    def parseIf: If = {
-      // if ( Expression ) Expression ( else Expression )?
-      eat(IF)
-      val testCondition = parseNestedExpression
-      val thenBody = parseExpression
-      var elseBody: Option[ExprTree] = None
-      if (currentToken.kind == ELSE) {
-        eat(ELSE)
-        elseBody = Some(parseExpression)
+      eat(COLON)
+      val retType = typeDecl
+      eat(LBRACE)
+      var varDecls : List[VarDecl] = List()
+      while (currentToken.kind == VAR) {
+        val v = varDecl
+        varDecls = varDecls :+ v
       }
-      new If(testCondition, thenBody, elseBody)
-    }
-
-    def parseWhile: While = {
-      // while ( Expression ) Expression
-      eat(WHILE)
-      val testCondition = parseNestedExpression
-      val body = parseExpression
-      new While(testCondition, body)
-    }
-
-    def parsePrintln: Println = {
-      eat(PRINTLN)
-      val expr = parseNestedExpression
-      new Println(expr)
-    }
-
-    def parseStrOf: Strof = {
-      eat(STROF)
-      val expr = parseNestedExpression
-      new Strof(expr)
-    }
-
-    def parseBlock: Block = {
-      var exprList: List[ExprTree] = List()
+      var exprs : List[ExprTree] = List()
+      while (currentToken.kind != RBRACE) {
+        val e = expr
+        exprs = e :: exprs
+        if (currentToken.kind != RBRACE) {
+          eat(SEMICOLON)
+        }
+      }
       eat(RBRACE)
-      val expr = parseExpression
-      exprList = exprList :+ expr
-      while (currentToken.kind == SEMICOLON) {
-        eat(SEMICOLON)
-        exprList = exprList :+ parseExpression
-      }
-      new Block(exprList)
+      val retExpr = exprs.head // exprs currently reversed
+      exprs = exprs.tail.reverse // take everything but the 'first' expr, and reverse
+      new MainMethod(new MethodDecl(retType, Identifier("main"), args, varDecls, exprs, retExpr))
     }
 
+    def methodDecl: MethodDecl = {
+      // MethodDeclaration	::=	method Identifier ( ( Identifier : Type ( , Identifier : Type )* )? ) : Type = { ( VarDeclaration )* Expression ( ; Expression )* }
+      // case class MethodDecl(retType: TypeTree, id: Identifier, args: List[Formal], vars: List[VarDecl], exprs: List[ExprTree], retExpr: ExprTree) extends Tree {
+      eat(METHOD)
+      val ident = new Identifier(getString(currentToken))
+      eat(IDKIND)
+      eat(LPAREN)
+      var args : List[Formal] = List()
+      while (currentToken.kind == IDKIND) {
+        val argId = new Identifier(getString(currentToken))
+        eat(IDKIND)
+        eat(COLON)
+        val argType = typeDecl
+        if (currentToken.kind != RPAREN) {
+          eat(COMMA)
+        }
+        args = args :+ new Formal(argType, argId)
+      }
+      eat(RPAREN)
+      eat(COLON)
+      val retType = typeDecl
+      eat(LBRACE)
+      var varDecls : List[VarDecl] = List()
+      while (currentToken.kind == VAR) {
+        val v = varDecl
+        varDecls = varDecls :+ v
+      }
+      var exprs : List[ExprTree] = List()
+      while (currentToken.kind != RBRACE) {
+        val e = expr
+        exprs = e :: exprs
+        if (currentToken.kind != RBRACE) {
+          eat(SEMICOLON)
+        }
+      }
+      eat(RBRACE)
+      val retExpr = exprs.head // exprs currently reversed
+      exprs = exprs.tail.reverse // take everything but the 'first' expr, and reverse
+      new MethodDecl(retType, ident, args, varDecls, exprs, retExpr)
+    }
+
+    def classDecl: ClassDecl = {
+      // ClassDeclaration	::=	class Identifier ( <: Identifier )? { ( VarDeclaration )* ( MethodDeclaration )* }
+      // ClassDecl(id: Identifier, parent: Option[Identifier], vars: List[VarDecl], methods: List[MethodDecl]) extends Tree
+      eat(CLASS)
+      val classIdent = Identifier(getString(currentToken))
+      eat(IDKIND)
+      var inheritsFrom : Option[Identifier] = None
+      if (currentToken.kind == LESSTHAN) {
+        eat(LESSTHAN)
+        eat(COLON)
+        inheritsFrom = Some(new Identifier(getString(currentToken)))
+        eat(IDKIND)
+      }
+      eat(LBRACE)
+      var variables : List[VarDecl] = List()
+      while (currentToken.kind == VAR) {
+        val v = varDecl
+        variables = variables :+ v
+      }
+      var methods : List[MethodDecl] = List()
+      while (currentToken.kind == METHOD) {
+        val m = methodDecl
+        methods = methods :+ m
+      }
+      eat(RBRACE)
+      new ClassDecl(classIdent, inheritsFrom, variables, methods)
+    }
+
+    def expr: ExprTree = { // think method calls should have lowest precedence
+    // expr.length
+    // expr.identifier(expr, ..., expr)
+    var lhs = orExpr
+      while (currentToken.kind == DOT) {
+        eat(DOT)
+        if (currentToken.kind == LENGTH) {
+          return new ArrayLength(lhs)
+        } else if (currentToken.kind == IDKIND) {
+          // then we have a method call
+          val methodName = new Identifier(getString(currentToken))
+          eat(IDKIND)
+          var args: List[ExprTree] = List()
+          eat(LPAREN)
+          while (currentToken.kind != RPAREN) {
+            val a = orExpr
+            args = args :+ a
+            if (currentToken.kind != RPAREN) eat(COMMA)
+          }
+          eat(RPAREN)
+          return new MethodCall(lhs, methodName, args)
+        }
+      }
+      fatal("expected: method name after dot")
+    }
+
+    def orExpr: ExprTree = {
+      // orExpr: andExpr (|| andExpr)*
+      var lhs = andExpr
+      while (currentToken.kind == OR) {
+        eat(OR)
+        var rhs = andExpr
+        lhs = Or(lhs, rhs) // is this left associative
+      }
+      lhs
+    }
+
+    def andExpr: ExprTree = {
+      // andExpr: compareExpr (&& compareExpr)*
+      var lhs = compareExpr
+      while (currentToken.kind == AND) {
+        eat(AND)
+        var rhs = compareExpr
+        lhs = And(lhs, rhs)
+      }
+      lhs
+    }
+
+    def compareExpr: ExprTree = {
+      // compareExpr: term ((+ | -) term)*
+      var lhs = term
+      while (currentToken.kind == PLUS || currentToken.kind == MINUS) {
+        if (currentToken.kind == PLUS) {
+          eat(PLUS)
+          var rhs = term
+          lhs = Plus(lhs, rhs)
+        } else {
+          eat(MINUS)
+          var rhs = term
+          lhs = Minus(lhs, rhs)
+        }
+      }
+      lhs
+    }
+
+    def term: ExprTree = {
+      // term: factor ((* | /) factor)*
+      var lhs = factor
+      while (currentToken.kind == TIMES || currentToken.kind == DIV) {
+        if (currentToken.kind == TIMES) {
+          eat(TIMES)
+          var rhs = factor
+          lhs = Times(lhs, rhs)
+        } else {
+          eat(DIV)
+          var rhs = factor
+          lhs = Div(lhs, rhs)
+        }
+      }
+      lhs
+    }
+
+    def factor: ExprTree = {
+      currentToken.kind match {
+        case LPAREN => {
+          eat(LPAREN)
+          val e = expr
+          eat(RPAREN)
+          e
+        }
+        case LBRACE => {
+          eat(LBRACE)
+          var expressions : List[ExprTree] = List()
+          while (currentToken.kind != RBRACE) {
+            val e = expr
+            expressions = expressions :+ e
+            if (currentToken.kind != RBRACE) {
+              eat(SEMICOLON)
+            }
+          }
+          eat(RBRACE)
+          new Block(expressions)
+        }
+        case BANG => {
+          eat(BANG)
+          val e = expr
+          new Not(e)
+        }
+        case IDKIND => {
+          val id = getString(currentToken)
+          eat(IDKIND)
+          currentToken.kind match {
+            case LBRACKET => {
+              eat(LBRACKET)
+              val index = expr
+              eat(RBRACKET)
+              currentToken.kind match {
+                case EQSIGN => {
+                  eat(EQSIGN)
+                  val assignment = expr
+                  new ArrayAssign(new Identifier(id), index, assignment)
+                }
+                case _ => {
+                  new ArrayRead(new Identifier(id), index)
+                }
+              }
+            }
+            case EQSIGN => {
+              eat(EQSIGN)
+              val rhs = expr
+              new Assign(new Identifier(id), rhs)
+            }
+            case _ => new Identifier(id)
+          }
+        }
+        case WHILE => {
+          // while ( Expression ) Expression
+          eat(WHILE)
+          eat(LPAREN)
+          val condition = expr
+          eat(RPAREN)
+          val body = expr
+          new While(condition, body)
+        }
+        case PRINTLN => {
+          eat(PRINTLN)
+          eat(LPAREN)
+          val printExpr = expr
+          eat(RPAREN)
+          new Println(printExpr)
+        }
+        case STROF => {
+          eat(STROF)
+          eat(LPAREN)
+          val strOfExpr = expr
+          eat(RPAREN)
+          new Strof(strOfExpr)
+        }
+        case IF => {
+          eat(IF)
+          // if ( Expression ) Expression ( else Expression )?
+          eat(LPAREN)
+          val condition = expr
+          eat(RPAREN)
+          val thenBody = expr
+          var elseBody : Option[ExprTree] = None
+          if (currentToken.kind == ELSE) {
+            eat(ELSE)
+            elseBody = Some(expr)
+          }
+          new If(condition, thenBody, elseBody)
+        }
+        case NEW => {
+          eat(NEW)
+          val id = new Identifier(getString(currentToken))
+          eat(LPAREN)
+          eat(RPAREN)
+          new New(id)
+        }
+        case SELF => {
+          eat(SELF)
+          new Self()
+        }
+        case TRUE => {
+          eat(TRUE)
+          new True()
+        }
+        case FALSE => {
+          eat(FALSE)
+          new False()
+        }
+      }
+    }
+
+    def parseGoal: Program = {
+      // Goal	::=	( ClassDeclaration )* MethodDeclaration <EOF>
+      // make a list of class declarations then the main method then eat EOF
+      var classes: List[ClassDecl] = List()
+      while (currentToken.kind == CLASS) {
+        val c = classDecl
+        classes = classes :+ c
+      }
+
+      val mainMethod = mainMethodDecl
+
+      eat(EOF)
+      new Program(mainMethod, classes)
+    }
 
     readToken
     val tree = parseGoal
