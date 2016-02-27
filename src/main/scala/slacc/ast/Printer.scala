@@ -18,31 +18,70 @@ object Printer {
   }
 
   def printProgram(t: Program): String = {
-    ???
+    val buf = new StringBuilder()
+    t.classes.foreach(klass => buf.append(apply(klass)))
+    buf.append(apply(t.main))
+    buf.toString()
   }
 
   def printMainMethod(t: MainMethod): String = {
-    ???
+    val buf = new StringBuilder()
+    buf.append("method Main {\n")
+    t.exprs.foreach(exp => buf.append(apply(exp)))
+    buf.append("}\n")
+    buf.toString()
   }
 
   def printClassDecl(t: ClassDecl): String = {
-    ???
+    val buf = new StringBuilder()
+    buf.append("class " + apply(t.id))
+    t.parent match {
+      case Some(parent: Identifier) => buf.append(" <: " + apply(parent) + " ")
+      case _ =>
+    }
+    buf.append("{\n")
+    t.vars.foreach(v => buf.append(apply(v)))
+    t.methods.foreach(m => buf.append(apply(m)))
+    buf.append("}\n")
+    buf.toString()
   }
 
   def printVarDecl(t: VarDecl): String = {
-    ???
+    val buf = new StringBuilder()
+    buf.append("var ")
+      .append(apply(t.id))
+      .append(" : ")
+      .append(apply(t.tpe))
+      .append("\n")
+    buf.toString()
   }
 
   def printMethodDecl(t: MethodDecl): String =  {
-    ???
+    val buf = new StringBuilder()
+    buf.append("method ").append(apply(t.id)).append(" (")
+    val formalStrings: List[String] = t.args.map(formal => apply(formal))
+    buf.append(formalStrings.mkString(","))
+    buf.append(") ").append(apply(t.retType)).append(" = { ")
+    t.vars.foreach(v => buf.append(apply(v)))
+    val exprString: List[String] = (t.exprs :+ t.retExpr).map(exp => apply(exp))
+    buf.append(exprString.mkString(";\n")).append("}\n")
+    buf.toString()
   }
 
   def printFormal(t: Formal): String = {
-    ???
+    val buf = new StringBuilder()
+    buf.append(apply(t.id)).append(" : ").append(apply(t.tpe))
+    buf.toString()
   }
 
   def printType(t: TypeTree): String = {
-    ???
+    t match {
+      case _ : IntArrayType => "Int[]"
+      case _ : IntType => "Int"
+      case _ : BooleanType => "Bool"
+      case _ : StringType => "String"
+      case _ : UnitType => "Unit"
+    }
   }
 
   def printExpression(t: ExprTree): String = {
