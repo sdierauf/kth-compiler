@@ -28,6 +28,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
       var c = source.next
       var pos = source.pos
       var tempPos = pos
+      var shouldReturnEof = false
 
       def hasNext : Boolean = {
         source.hasNext
@@ -38,12 +39,11 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
         if (hasNext) {
           c = source.next
           pos = source.pos
-        }
+        } 
       }
 
       def next : Token = {
         // invariant: every case will increment c before the next loop
-
         if (c.isSpaceChar) {
           var isWhiteSpace = true
           while (hasNext && isWhiteSpace){ // skip white space

@@ -26,9 +26,9 @@ object Printer {
 
   def printMainMethod(t: MainMethod): String = {
     val buf = new StringBuilder()
-    buf.append("method Main {\n")
-    t.exprs.foreach(exp => buf.append(apply(exp)))
-    buf.append("}\n")
+    buf.append("method Main() {\n")
+    buf.append(t.exprs.map(exp => apply(exp)).mkString(";\n"))
+    buf.append(";\n}\n")
     buf.toString()
   }
 
@@ -64,7 +64,7 @@ object Printer {
     buf.append(") ").append(apply(t.retType)).append(" = { ")
     t.vars.foreach(v => buf.append(apply(v)))
     val exprString: List[String] = (t.exprs :+ t.retExpr).map(exp => apply(exp))
-    buf.append(exprString.mkString(";\n")).append("}\n")
+    buf.append(exprString.mkString(";\n")).append(";\n}\n")
     buf.toString()
   }
 
