@@ -1,4 +1,8 @@
 method Main() {
-    // variable declaration
-    var x: Int;
+    // variable declarations
+    var a: Int;
+    var b: String;
+    var c: Int[];
+    var d: Unit;
+    var e: Bool;
 }
