@@ -28,15 +28,21 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
       var c = source.next
       var pos = source.pos
       var tempPos = pos
-      var shouldReturnEof = false
+      var shouldReturnEOF = false
 
       def hasNext : Boolean = {
-        source.hasNext
+        // cant use source.hasNext here alone if we want to get the EOF
+        if(!source.hasNext && !shouldReturnEOF){ 
+          shouldReturnEOF = true
+          return true
+        } else {
+          return source.hasNext 
+        }
       }
 
       def safeInc: Unit = {
         tempPos = pos
-        if (hasNext) {
+        if (source.hasNext) {
           c = source.next
           pos = source.pos
         } 
@@ -44,6 +50,9 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
 
       def next : Token = {
         // invariant: every case will increment c before the next loop
+        if (shouldReturnEOF) {
+          return new Token(EOF).setPos(f, pos)
+        }
         if (c.isSpaceChar) {
           var isWhiteSpace = true
           while (hasNext && isWhiteSpace){ // skip white space
