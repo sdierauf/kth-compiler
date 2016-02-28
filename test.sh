@@ -5,3 +5,5 @@ echo "run --tokens src/$@.slacc" > commands.txt
 sbt < commands.txt
 echo "run --ast src/$@.slacc" > commands.txt
 sbt < commands.txt
+echo "run --print src/$@.slacc" > commands.txt
+sbt < commands.txt

@@ -12,8 +12,8 @@ object Printer {
       case t: VarDecl => printVarDecl(t)
       case t: MethodDecl => printMethodDecl(t)
       case t: Formal => printFormal(t)
-      case t: TypeTree => printType(t)
       case t: ExprTree => printExpression(t)
+      case t: TypeTree => printType(t)
     }
   }
 
@@ -26,9 +26,7 @@ object Printer {
 
   def printMainMethod(t: MainMethod): String = {
     val buf = new StringBuilder()
-    buf.append("method Main() {\n")
-    buf.append(t.exprs.map(exp => apply(exp)).mkString(";\n"))
-    buf.append(";\n}\n")
+    buf.append(apply(t.main))
     buf.toString()
   }
 
@@ -52,7 +50,7 @@ object Printer {
       .append(apply(t.id))
       .append(" : ")
       .append(apply(t.tpe))
-      .append("\n")
+      .append(";\n")
     buf.toString()
   }
 
@@ -61,10 +59,10 @@ object Printer {
     buf.append("method ").append(apply(t.id)).append(" (")
     val formalStrings: List[String] = t.args.map(formal => apply(formal))
     buf.append(formalStrings.mkString(","))
-    buf.append(") ").append(apply(t.retType)).append(" = { ")
+    buf.append(") ").append(apply(t.retType)).append(" = {\n")
     t.vars.foreach(v => buf.append(apply(v)))
-    val exprString: List[String] = (t.exprs :+ t.retExpr).map(exp => apply(exp))
-    buf.append(exprString.mkString(";\n")).append(";\n}\n")
+    val exprStrings: List[String] = (t.exprs :+ t.retExpr).map(exp => apply(exp))
+    buf.append(exprStrings.mkString(";\n")).append(";\n}\n")
     buf.toString()
   }
 
@@ -81,7 +79,7 @@ object Printer {
       case _ : BooleanType => "Bool"
       case _ : StringType => "String"
       case _ : UnitType => "Unit"
-      case _ => apply(t)
+      case _ => "UNKNOWN-TYPE"
     }
   }
 
