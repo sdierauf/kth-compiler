@@ -44,12 +44,6 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
 
       def next : Token = {
         // invariant: every case will increment c before the next loop
-        // need EOF and to fix 
-        
-      }
-
-      def next : Token = {
-        // invariant: every case will increment c before the next loop
         if (c.isSpaceChar) {
           var isWhiteSpace = true
           while (hasNext && isWhiteSpace){ // skip white space
