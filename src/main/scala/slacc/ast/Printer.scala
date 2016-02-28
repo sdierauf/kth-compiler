@@ -79,7 +79,7 @@ object Printer {
       case _ : BooleanType => "Bool"
       case _ : StringType => "String"
       case _ : UnitType => "Unit"
-      case _ => "UNKNOWN-TYPE"
+      case t : Identifier => printIdentifier(t)  // should never hit this case
     }
   }
 

@@ -1,1 +1,1 @@
-run --print src/var.slacc
+run --print src/class.slacc

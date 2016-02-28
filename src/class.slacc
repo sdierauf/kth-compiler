@@ -1,0 +1,11 @@
+class Fun {
+    method haveFun(): Unit = {
+        println("fun!")
+    }
+}
+
+method Main() {
+    var f: Fun;
+    f = new Fun();
+    f.haveFun();
+}

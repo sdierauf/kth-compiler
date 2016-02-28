@@ -78,6 +78,11 @@ object Parser extends Pipeline[Iterator[Token], Program] {
           eat(STRING)
           new StringType()
         }
+        case IDKIND => {
+          val id = new Identifier(getString(currentToken))
+          eat(IDKIND)
+          id
+        }
       }
     }
 
@@ -160,6 +165,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       eat(RPAREN)
       eat(COLON)
       val retType = typeDecl
+      eat(EQSIGN)
       eat(LBRACE)
       var varDecls : List[VarDecl] = List()
       while (currentToken.kind == VAR) {
@@ -393,6 +399,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
         case NEW => {
           eat(NEW)
           val id = new Identifier(getString(currentToken))
+          eat(IDKIND)
           eat(LPAREN)
           eat(RPAREN)
           new New(id)
