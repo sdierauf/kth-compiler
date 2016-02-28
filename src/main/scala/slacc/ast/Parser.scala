@@ -123,6 +123,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
         varDecls = varDecls :+ v
       }
       var exprs : List[ExprTree] = List()
+      var retExpr: ExprTree = new True() // exprs currently reversed
       while (currentToken.kind != RBRACE) {
         val e = expr
         exprs = e :: exprs
@@ -131,8 +132,10 @@ object Parser extends Pipeline[Iterator[Token], Program] {
         }
       }
       eat(RBRACE)
-      val retExpr = exprs.head // exprs currently reversed
-      exprs = exprs.tail.reverse // take everything but the 'first' expr, and reverse
+      if (exprs.nonEmpty) {
+        retExpr = exprs.head
+        exprs = exprs.tail.reverse // take everything but the 'first' expr, and reverse
+      }
       new MainMethod(new MethodDecl(retType, Identifier("main"), args, varDecls, exprs, retExpr))
     }
 
