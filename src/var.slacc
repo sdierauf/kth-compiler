@@ -1,0 +1,4 @@
+method Main() {
+    // variable declaration
+    var x: Int;
+}

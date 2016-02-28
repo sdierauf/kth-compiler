@@ -86,6 +86,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       // VarDecl(tpe: TypeTree, id: Identifier)
       eat(VAR)
       val ident = new Identifier(getString(currentToken))
+      eat(IDKIND)
       eat(COLON)
       val varType = typeDecl
       eat(SEMICOLON)
@@ -102,7 +103,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       eat(LPAREN)
       var args : List[Formal] = List()
       while (currentToken.kind == IDKIND) {
-        val argId = Identifier(getString(currentToken))
+        val argId = new Identifier(getString(currentToken))
         eat(IDKIND)
         eat(COLON)
         val argType = typeDecl
