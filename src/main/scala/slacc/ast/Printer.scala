@@ -167,7 +167,7 @@ object Printer {
   }
 
   def printStringLit(t: StringLit): String ={
-    t.value
+    "\"" + t.value + "\""
   }
 
   def printTrue(t: True): String = {
