@@ -231,7 +231,7 @@ object Printer {
   }
 
   def printArrayAssign(t: ArrayAssign): String = {
-    apply(t.id) + "[" + apply(t.index) + "] =" + apply(t.expr) 
+    apply(t.id) + "[" + apply(t.index) + "] = " + apply(t.expr)
   }
 
   def printStrof(t: Strof): String = {

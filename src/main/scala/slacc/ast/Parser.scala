@@ -221,6 +221,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       while (currentToken.kind == DOT) {
         eat(DOT)
         if (currentToken.kind == LENGTH) {
+          eat(LENGTH)
           return new ArrayLength(lhs)
         } else if (currentToken.kind == IDKIND) {
           // then we have a method call
