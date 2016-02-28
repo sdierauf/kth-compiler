@@ -1,1 +1,1 @@
-run --ast src/var.slacc
+run --print src/var.slacc
