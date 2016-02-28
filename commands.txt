@@ -1,1 +1,1 @@
-run --print src/class.slacc
+run --print src/tiny.slacc

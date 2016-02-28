@@ -430,7 +430,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
 
       val mainMethod = mainMethodDecl
 
-//      eat(EOF)
+      eat(EOF)
       new Program(mainMethod, classes)
     }
 
