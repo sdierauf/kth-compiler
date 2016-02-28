@@ -34,6 +34,10 @@ object Main {
         ctx = ctx.copy(outDir = Some(new File(out)))
         processOption(args)
 
+      case "--tap" :: args =>
+        ctx = ctx.copy(doTokens = true, doPrintMain = true, doAST = true)
+        processOption(args)
+
       case f :: args =>
         ctx = ctx.copy(files = new File(f) :: ctx.files)
         processOption(args)
@@ -62,13 +66,26 @@ object Main {
     println(" --tokens      displays the list of tokens")
     println(" --print       pretty-prints the program")
     println(" --ast         displays the AST")
+    println(" --tap         displays list of tokens, then ast, then pretty prints")
     println(" -d <outdir>   generates class files in the specified directory")
   }
 
   def main(args: Array[String]) {
     val ctx = processOptions(args)
 
-    if (ctx.doTokens) {
+    if (ctx.doTokens && ctx.doPrintMain && ctx.doAST) {
+      val iter = Lexer.run(ctx)(ctx.files.head)
+      while (iter.hasNext) {
+        val n = iter.next()
+        println(n+"("+n.line+":"+n.col+")")
+      }
+      println()
+      val pipeline = Lexer andThen Parser
+      val ast = pipeline.run(ctx)(ctx.files.head)
+      println(ast)
+      println()
+      println(Printer(ast))
+    } else if (ctx.doTokens) {
       val iter = Lexer.run(ctx)(ctx.files.head)
       while (iter.hasNext) {
         val n = iter.next()
