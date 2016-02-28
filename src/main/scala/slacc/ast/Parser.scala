@@ -43,7 +43,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       input match {
         case id: ID => id.value
         case string: STRLIT => string.value
-        case _ => fatal("expected something that had a string value")
+        case _ => fatal("expected something that had a string value, was " + currentToken.toString)
       }
     }
 
@@ -398,11 +398,22 @@ object Parser extends Pipeline[Iterator[Token], Program] {
         }
         case NEW => {
           eat(NEW)
-          val id = new Identifier(getString(currentToken))
-          eat(IDKIND)
-          eat(LPAREN)
-          eat(RPAREN)
-          new New(id)
+          currentToken.kind match {
+            case INT => {
+              eat(INT)
+              eat(LBRACKET)
+              val size = expr
+              eat(RBRACKET)
+              new NewIntArray(size)
+            }
+            case IDKIND => {
+              val id = new Identifier(getString(currentToken))
+              eat(IDKIND)
+              eat(LPAREN)
+              eat(RPAREN)
+              new New(id)
+            }
+          }
         }
         case SELF => {
           eat(SELF)
