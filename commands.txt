@@ -1,1 +1,1 @@
-run --ast src/tiny.slacc
+run --ast src/ops.slacc
