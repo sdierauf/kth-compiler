@@ -1,5 +1,5 @@
 #!/bin/bash
 
 echo "Starting tests for:" $@
-echo "run --tap src/$@.slacc" > commands.txt
-sbt < commands.txt
+echo "run --tap src/$@.slacc" | sbt
+
