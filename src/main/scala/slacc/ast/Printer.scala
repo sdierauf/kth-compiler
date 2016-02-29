@@ -156,7 +156,7 @@ object Printer {
   }
 
   def printMethodCall(t: MethodCall): String = {
-    var s = new StringBuilder(apply(t.obj) + " " + apply(t.meth) +"(")
+    var s = new StringBuilder(apply(t.obj) + "." + apply(t.meth) +"(")
     val argList : List[String] = t.args.map(e => apply(e))
     s ++= argList.mkString(",")
     (s ++= ")").toString
@@ -191,7 +191,7 @@ object Printer {
   }
 
   def printNew(t: New): String = {
-    "new " + apply(t.tpe)
+    "new " + apply(t.tpe) + "()"
   }
 
   def printNot(t: Not): String = {
