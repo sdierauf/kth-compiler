@@ -1,0 +1,6 @@
+// test while loop
+method Main() : Unit {
+    while (true) {
+        println("Infinite loop")
+    }
+}
