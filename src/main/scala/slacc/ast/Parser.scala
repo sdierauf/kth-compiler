@@ -329,7 +329,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
         }
         case BANG => {
           eat(BANG)
-          val e = expr
+          val e = factor
           new Not(e)
         }
         case IDKIND => {
