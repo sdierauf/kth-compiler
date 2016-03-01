@@ -1,3 +1,4 @@
+// Very simple class test
 class Fun {
     method haveFun(): Unit = {
         println("fun!")

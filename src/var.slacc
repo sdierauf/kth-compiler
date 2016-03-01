@@ -1,3 +1,4 @@
+// Variable declaration test
 method Main() {
     // variable declarations
     var a: Int;
@@ -5,4 +6,5 @@ method Main() {
     var c: Int[];
     var d: Unit;
     var e: Bool;
+    a;
 }

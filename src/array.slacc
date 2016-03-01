@@ -1,3 +1,4 @@
+// Array operations tests
 method Main() {
     var x: Int[];
     x = new Int[4];
