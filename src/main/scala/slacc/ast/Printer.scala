@@ -115,36 +115,40 @@ object Printer {
     }
   }
 
+  def wrap(s: String): String = {
+    "(" + s + ")"
+  }
+
   def printAnd(t: And): String = {
-    apply(t.lhs) + " && " + apply(t.rhs)
+    wrap(apply(t.lhs) + " && " + apply(t.rhs))
   }
 
   def printOr(t: Or): String ={
-    apply(t.lhs) + " || " + apply(t.rhs)
+    wrap(apply(t.lhs) + " || " + apply(t.rhs))
   }
 
   def printPlus(t: Plus): String = {
-    apply(t.lhs) + " + " + apply(t.rhs)
+    wrap(apply(t.lhs) + " + " + apply(t.rhs))
   }
 
   def printMinus(t: Minus): String ={
-    apply(t.lhs) + " - " + apply(t.rhs)
+    wrap(apply(t.lhs) + " - " + apply(t.rhs))
   }
 
   def printTimes(t: Times): String ={
-    apply(t.lhs) + " * " + apply(t.rhs)
+    wrap(apply(t.lhs) + " * " + apply(t.rhs))
   }
 
   def printDiv(t: Div): String = {
-    apply(t.lhs) + " / " + apply(t.rhs)
+    wrap(apply(t.lhs) + " / " + apply(t.rhs))
   }
 
   def printLessThan(t: LessThan): String = {
-    apply(t.lhs) + " < " + apply(t.rhs)
+    wrap(apply(t.lhs) + " < " + apply(t.rhs))
   }
 
   def printEquals(t: Equals): String ={
-    apply(t.lhs) + " == " + apply(t.rhs)
+    wrap(apply(t.lhs) + " == " + apply(t.rhs))
   }
 
   def printArrayRead(t: ArrayRead): String ={
