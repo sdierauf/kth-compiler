@@ -102,7 +102,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       eat(METHOD)
       // i can do this? *you can now*
       if (!getString(currentToken).equals("Main")) {
-        fatal("expected: Main method to be called 'main'")
+        fatal("expected: Main method to be called 'Main'")
       }
       eat(IDKIND)
       eat(LPAREN)
@@ -118,9 +118,8 @@ object Parser extends Pipeline[Iterator[Token], Program] {
         args = args :+ new Formal(argType, argId)
       }
       eat(RPAREN)
-      // would a main method have a return type etc
-//      eat(COLON)
-      val retType = new UnitType()
+      eat(COLON)
+      val retType = typeDecl
       eat(LBRACE)
       var varDecls : List[VarDecl] = List()
       while (currentToken.kind == VAR) {
@@ -141,7 +140,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
         retExpr = exprs.head
         exprs = exprs.tail.reverse // take everything but the 'first' expr, and reverse
       }
-      new MainMethod(new MethodDecl(retType, Identifier("main"), args, varDecls, exprs, retExpr))
+      new MainMethod(new MethodDecl(retType, Identifier("Main"), args, varDecls, exprs, retExpr))
     }
 
     def methodDecl: MethodDecl = {

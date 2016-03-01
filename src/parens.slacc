@@ -1,5 +1,5 @@
 // Order of operations test
-method Main() {
+method Main() : Unit {
     (1 + 2);
     (1 + 2) * 3;
     (1 + (2 * 3));

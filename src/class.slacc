@@ -5,7 +5,7 @@ class Fun {
     }
 }
 
-method Main() {
+method Main() : Unit{
     var f: Fun;
     f = new Fun();
     f.haveFun();

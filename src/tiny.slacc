@@ -1,4 +1,4 @@
 // Tiny program
-method Main() {
+method Main() : Unit {
     println("hello world");
 }

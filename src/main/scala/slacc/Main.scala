@@ -1,7 +1,7 @@
 package slacc
 
 import utils._
-import java.io.File
+import java.io.{PrintWriter, File}
 
 import lexer._
 import ast._
@@ -32,6 +32,10 @@ object Main {
 
       case "-d" :: out :: args =>
         ctx = ctx.copy(outDir = Some(new File(out)))
+        processOption(args)
+
+      case "--ppt" :: args =>
+        ctx = ctx.copy(testPrint = true)
         processOption(args)
 
       case "--tap" :: args =>
@@ -68,10 +72,11 @@ object Main {
     println(" --ast         displays the AST")
     println(" --tap         displays list of tokens, then ast, then pretty prints")
     println(" -d <outdir>   generates class files in the specified directory")
+    println(" --ppt         tests that print(parse(P)) = print(parse(print(parse(P))))")
   }
 
   def main(args: Array[String]) {
-    val ctx = processOptions(args)
+    var ctx = processOptions(args) // changed from val to var for ppt
 
     if (ctx.doTokens && ctx.doPrintMain && ctx.doAST) {
       val iter = Lexer.run(ctx)(ctx.files.head)
@@ -99,6 +104,23 @@ object Main {
       val pipeline = Lexer andThen Parser
       val ast = pipeline.run(ctx)(ctx.files.head)
       println(ast)
+    } else if (ctx.testPrint) {
+      // test print(parse(P)) = print(parse(print(parse(P)))) holds
+      val pipeline = Lexer andThen Parser
+      val ast = pipeline.run(ctx)(ctx.files.head)
+      val program = Printer(ast)
+      new PrintWriter("ppt_lhs.slacc") { write(program); close }
+      ctx = ctx.copy(files = new File("ppt_lhs.slacc")::ctx.files)
+      val rhsPipe = Lexer andThen Parser
+      val rhsAst = pipeline.run(ctx)(ctx.files.head)
+      val rhsProgram = Printer(rhsAst)
+      // now compare the strings
+      if (rhsProgram == program) {
+        print("print(parse(P)) = print(parse(print(parse(P)))) holds.")
+      } else {
+        println("Test failed.")
+        println(program diff rhsProgram)
+      }
     } else {
       ???
     }
