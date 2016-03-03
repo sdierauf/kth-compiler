@@ -43,7 +43,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       input match {
         case id: ID => id.value
         case string: STRLIT => string.value
-        case _ => fatal("expected something that had a string value, was " + currentToken.toString)
+        case _ => fatal("expected something that had a string value (probably building an ID), was " + currentToken.toString)
       }
     }
 
@@ -98,6 +98,14 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       new VarDecl(varType, ident)
     }
 
+    def formal: Formal = {
+      val argId = new Identifier(getString(currentToken))
+      eat(IDKIND)
+      eat(COLON)
+      val argType = typeDecl
+      new Formal(argType, argId)
+    }
+
     def mainMethodDecl: MainMethod = { // special case of method declaration where id must eq main
       eat(METHOD)
       // i can do this? *you can now*
@@ -107,15 +115,13 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       eat(IDKIND)
       eat(LPAREN)
       var args : List[Formal] = List()
-      while (currentToken.kind == IDKIND) {
-        val argId = new Identifier(getString(currentToken))
-        eat(IDKIND)
-        eat(COLON)
-        val argType = typeDecl
-        if (currentToken.kind != RPAREN) {
+      if (currentToken.kind == IDKIND) {
+        args = args :+ formal
+        while (currentToken.kind == COMMA) {
+          println("eating comma")
           eat(COMMA)
+          args = args :+ formal
         }
-        args = args :+ new Formal(argType, argId)
       }
       eat(RPAREN)
       eat(COLON)
@@ -152,15 +158,12 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       eat(IDKIND)
       eat(LPAREN)
       var args : List[Formal] = List()
-      while (currentToken.kind == IDKIND) {
-        val argId = new Identifier(getString(currentToken))
-        eat(IDKIND)
-        eat(COLON)
-        val argType = typeDecl
-        if (currentToken.kind != RPAREN) {
+      if (currentToken.kind == IDKIND) {
+        args = args :+ formal
+        while (currentToken.kind == COMMA) {
           eat(COMMA)
+          args = args :+ formal
         }
-        args = args :+ new Formal(argType, argId)
       }
       eat(RPAREN)
       eat(COLON)
