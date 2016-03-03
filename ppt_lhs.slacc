@@ -1,69 +1,137 @@
-class BS{
-var number : Int[];
-var size : Int;
-method Start (sz : Int) :Int = {
-var aux01 : Int;
-var aux02 : Int;
-aux01 = this.Init(sz);
-aux02 = this.Print();
-if (this.Search(8))println(1)else println(0);
-if (this.Search(19))println(1)else println(0);
-if (this.Search(20))println(1)else println(0);
-if (this.Search(21))println(1)else println(0);
-if (this.Search(37))println(1)else println(0);
-if (this.Search(38))println(1)else println(0);
-if (this.Search(39))println(1)else println(0);
-if (this.Search(50))println(1)else println(0);
-999;
+class RentingAgency{
+method exampleDay () :String = {
+var client1 : Client;
+var client2 : Client;
+var client3 : Client;
+var car1 : Car;
+var car2 : Car;
+var truck1 : Truck;
+var truck2 : Truck;
+client1 = new Client();
+client2 = new Client();
+client3 = new Client();
+car1 = new Car();
+car2 = new Car();
+truck1 = new Truck();
+truck2 = new Truck();
+println(car1.init(27275,"Ferrari",2));
+println(car2.init(32113,"VW",7));
+println(truck1.init(12879,"Opel",40));
+println(truck2.init(99234,"Renault",56));
+println(client1.create(1,"Charlie Sheen"));
+println(client2.create(2,"Angelina Jolie"));
+println(client3.create(3,"Cameron Diaz"));
+println("");
+println("----- START OF THE EXAMPLE DAY OF A RENTING AGENCY -----");
+println("");
+println(self.checkout(client1,car1));
+println(self.checkout(client2,car1));
+println(self.checkout(client1,car2));
+println(self.checkin(client1,car1,453));
+println(self.checkout(client3,truck2));
+println(self.checkout(client3,truck1));
+println(self.checkout(client2,car1));
+println(self.checkin(client3,truck2,1011));
+println(self.checkin(client2,car1,123));
+"------ END OF THE EXAMPLE DAY OF A RENTING AGENCY ------";
 }
-method Search (num : Int) :Bool = {
-var bs01 : Bool;
-var right : Int;
-var left : Int;
-var var_cont : Bool;
-var medium : Int;
-var aux01 : Int;
-var nt : Int;
-aux01 = 0;
-bs01 = false;
-right = number.length;
-right = (right - 1);
-left = 0;
-var_cont = true;
-while (var_cont) {medium = (left + right);
-medium = (medium / 2);
-aux01 = number[medium];
-if ((num < aux01))right = (medium - 1)else left = (medium + 1);
-if ((aux01 == num))var_cont = falseelse var_cont = true;
-if ((right < left))var_cont = falseelse nt = 0};
-if ((aux01 == num))bs01 = trueelse bs01 = false;
-bs01;
+method checkout (client : Client,vehicle : Vehicle) :String = {
+println((" " + client.rent(vehicle)));
+"";
 }
-method Print () :Int = {
-var j : Int;
-j = 1;
-while ((j < size)) {println(number[j]);
-j = (j + 1)};
-println(99999);
-0;
+method checkin (client : Client,vehicle : Vehicle,milage : Int) :String = {
+println((" " + client.restore(vehicle,milage)));
+"";
 }
-method Init (sz : Int) :Int = {
-var j : Int;
-var k : Int;
-var aux01 : Int;
-var aux02 : Int;
-size = sz;
-number = new Int[sz];
-j = 1;
-k = (size + 1);
-while ((j < size)) {aux01 = (2 * j);
-aux02 = (k - 3);
-number[j] = (aux01 + aux02);
-j = (j + 1);
-k = (k - 1)};
-0;
+}
+class Client{
+var clientNumber : Int;
+var name : String;
+var rent : Bool;
+var rentedVehicle : Int;
+method create (nb : Int,n : String) :String = {
+var msg : String;
+clientNumber = nb;
+name = n;
+msg = (((("CREATE : Client " + clientNumber) + " (") + name) + ") created!");
+msg;
+}
+method rent (vehicle : Vehicle) :String = {
+var msg : String;
+if ((rent || vehicle.getRented())){if (rent){msg = (((("NO RENT : " + name) + " has already #") + rentedVehicle) + " (1 vehicle/client)")}
+ else {msg = (((("NO RENT : " + name) + " can't rent #") + vehicle.getNumber()) + " (already in use)")}}
+ else {rent = true;
+rentedVehicle = vehicle.getNumber();
+msg = ((("RENT : " + name) + " just rented : ") + vehicle.checkout())};
+msg;
+}
+method restore (vehicle : Vehicle,milage : Int) :String = {
+var msg : String;
+if (((rent && vehicle.getRented()) && (rentedVehicle == vehicle.getNumber()))){rent = false;
+rentedVehicle = 0;
+msg = ((("RETURN : " + name) + " just brought back : ") + vehicle.checkin(milage))}
+ else {msg = (((("NO RETURN : " + name) + " didn't rent #") + vehicle.getNumber()) + " or the vehicle is already back!")};
+msg;
+}
+}
+class Vehicle{
+var number : Int;
+var milage : Int;
+var brand : String;
+var rented : Bool;
+method checkout () :String = {
+rented = true;
+self.description();
+}
+method checkin (mil : Int) :String = {
+rented = false;
+milage = (milage + mil);
+self.description();
+}
+method description () :String = {
+var descr : String;
+descr = (((((("#" + number) + ", ") + brand) + ", ") + milage) + "km");
+descr;
+}
+method getNumber () :Int = {
+number;
+}
+method getMilage () :Int = {
+milage;
+}
+method getBrand () :String = {
+brand;
+}
+method getRented () :Bool = {
+rented;
+}
+}
+class Car <: Vehicle {
+var nbSeats : Int;
+method init (nb : Int,br : String,seats : Int) :String = {
+number = nb;
+brand = br;
+milage = 0;
+nbSeats = seats;
+(((((("CAR ADDED: #" + number) + ", ") + brand) + ", ") + nbSeats) + " seats");
+}
+method getNbSeats () :Int = {
+nbSeats;
+}
+}
+class Truck <: Vehicle {
+var maxWeight : Int;
+method init (nb : Int,br : String,weight : Int) :String = {
+number = nb;
+brand = br;
+milage = 0;
+maxWeight = weight;
+(((((("TRUCK ADDED : #" + number) + ", ") + brand) + ", ") + maxWeight) + "t");
+}
+method getMaxWeight () :Int = {
+maxWeight;
 }
 }
 method main () :Unit = {
-println(new BS().Start(20));
+println(new RentingAgency().exampleDay());
 }

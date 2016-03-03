@@ -213,7 +213,7 @@ object Printer {
     var elseBody: String = ""
     t.els match {
       case Some(els) => {
-        elseBody = "else " + apply(els)
+        elseBody = "\n else " + apply(els)
       }
       case None => {
         elseBody = ""
