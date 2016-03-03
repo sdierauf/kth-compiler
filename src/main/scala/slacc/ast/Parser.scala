@@ -431,6 +431,9 @@ object Parser extends Pipeline[Iterator[Token], Program] {
           eat(FALSE)
           new False()
         }
+        case _ => {
+          fatal("There shouldn't be a token of type " + currentToken.toString + " here!")
+        }
       }
     }
 
