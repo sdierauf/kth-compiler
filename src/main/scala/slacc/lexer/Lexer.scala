@@ -133,7 +133,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
 
         var possibleToken = new StringBuilder()
         if (c.isLetter) {
-          while (hasNext && c.isLetterOrDigit) {
+          while (hasNext && (c.isLetterOrDigit || c == '_')) {
             possibleToken.append(c)
             safeInc
           }
