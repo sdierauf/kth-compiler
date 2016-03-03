@@ -18,3 +18,4 @@ project/plugins/project/
 
 .idea/
 commands.txt
+.DS_Store
