@@ -59,7 +59,7 @@ object Printer {
     buf.append("method ").append(apply(t.id)).append(" (")
     val formalStrings: List[String] = t.args.map(formal => apply(formal))
     buf.append(formalStrings.mkString(","))
-    buf.append(") :").append(apply(t.retType)).append(" {\n")
+    buf.append(") :").append(apply(t.retType)).append(" = {\n")
     t.vars.foreach(v => buf.append(apply(v)))
     val exprStrings: List[String] = (t.exprs :+ t.retExpr).map(exp => apply(exp))
     buf.append(exprStrings.mkString(";\n")).append(";\n}\n")

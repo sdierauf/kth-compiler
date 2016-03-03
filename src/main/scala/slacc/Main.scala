@@ -15,6 +15,16 @@ object Main {
     f #:: (if (f.isDirectory) f.listFiles().toStream.flatMap(getFileTree)
     else Stream.empty)
 
+  def diffStrings(a: String, b: String): Unit = {
+    var counter = 0;
+    while (a.charAt(counter) == b.charAt(counter)) {
+      counter += 1;
+    }
+    println("diff: \n" + a.substring(counter - 50, counter + 50) + "\n" + b.substring(counter - 50, counter + 50))
+    println("counter is " + counter)
+  }
+
+
   def processOptions(args: Array[String]): Context = {
 
     val reporter = new Reporter()
@@ -51,6 +61,10 @@ object Main {
 
       case "--testAst" :: args =>
         ctx = ctx.copy(testAst = true)
+        processOption(args)
+
+      case "--testPrintAll" :: args =>
+        ctx = ctx.copy(testPrintAll = true)
         processOption(args)
 
       case f :: args =>
@@ -121,7 +135,8 @@ object Main {
       val ast = pipeline.run(ctx)(ctx.files.head)
       val program = Printer(ast)
       new PrintWriter("ppt_lhs.slacc") {
-        write(program); close
+        write(program);
+        close
       }
       ctx = ctx.copy(files = new File("ppt_lhs.slacc") :: ctx.files)
       val rhsPipe = Lexer andThen Parser
@@ -134,6 +149,27 @@ object Main {
         println("Test failed.")
         println(program diff rhsProgram)
       }
+    } else if(ctx.testPrintAll) {
+      getFileTree(ctx.files.head).filter(_.getName.endsWith(".slac")).foreach(f => {
+        val pipeline = Lexer andThen Parser
+        val ast = pipeline.run(ctx)(f)
+        val program = Printer(ast)
+        new PrintWriter("ppt_lhs.slacc") {
+          write(program);
+          close
+        }
+        ctx = ctx.copy(files = new File("ppt_lhs.slacc") :: ctx.files)
+        val rhsPipe = Lexer andThen Parser
+        val rhsAst = pipeline.run(ctx)(ctx.files.head)
+        val rhsProgram = Printer(rhsAst)
+        // now compare the strings
+        if (rhsProgram == program) {
+          print("print(parse(P)) = print(parse(print(parse(P)))) holds.")
+        } else {
+          println("Test failed.")
+          println(program diff rhsProgram)
+        }
+      })
     } else if (ctx.testAst) {
       // try all valids
       println()
@@ -143,7 +179,6 @@ object Main {
         println()
         println("Running tests for: " + f.getName())
         println("------------------")
-        println()
         val pipeline = Lexer andThen Parser
         val ast = pipeline.run(ctx)(f)
         val validAstString = Source.fromFile(new File(f.getAbsolutePath() + ".ast")).mkString.trim
@@ -157,7 +192,10 @@ object Main {
           println("Test:")
           println(validAstString)
           println("Diff:")
-          println(validAstString diff ast.toString)
+          val diff = ast.toString diff validAstString
+          println(diff)
+          println("==== Number of chars different " + diff.length)
+          diffStrings(ast.toString, validAstString)
         }
       })
     } else if (ctx.testParse) {
@@ -168,7 +206,6 @@ object Main {
         println()
         println("Running tests for: " + f.getName())
         println("------------------")
-        println()
         val pipeline = Lexer andThen Parser
         val ast = pipeline.run(ctx)(f)
         val validAst = new File(f.getAbsolutePath() + ".ast")
