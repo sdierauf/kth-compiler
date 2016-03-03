@@ -27,6 +27,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
 
     /** ''Eats'' the expected token, or terminates with an error. */
     def eat(kind: TokenKind): Unit = {
+      println("want " + kind + ", eating " + currentToken)
       if (currentToken.kind == kind) {
         readToken
       } else {
@@ -118,7 +119,6 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       if (currentToken.kind == IDKIND) {
         args = args :+ formal
         while (currentToken.kind == COMMA) {
-          println("eating comma")
           eat(COMMA)
           args = args :+ formal
         }
