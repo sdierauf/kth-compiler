@@ -8,7 +8,7 @@ object Trees {
 
   case class Program(main: MainMethod, classes: List[ClassDecl]) extends Tree
   case class MainMethod(main: MethodDecl) extends Tree {
-    val id = Identifier("Main")
+    val id = Identifier("main")
     def exprs: List[ExprTree] = main.exprs ::: (main.retExpr :: Nil)
   }
   case class ClassDecl(id: Identifier, parent: Option[Identifier], vars: List[VarDecl], methods: List[MethodDecl]) extends Tree

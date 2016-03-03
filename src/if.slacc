@@ -1,5 +1,5 @@
 // test if else
-method Main() : Unit {
+method main() : Unit {
     if (true) {
         println("True");
         if (true) {

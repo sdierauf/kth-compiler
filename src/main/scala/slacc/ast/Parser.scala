@@ -101,7 +101,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
     def mainMethodDecl: MainMethod = { // special case of method declaration where id must eq main
       eat(METHOD)
       // i can do this? *you can now*
-      if (!getString(currentToken).equals("Main")) {
+      if (!getString(currentToken).equals("main")) {
         fatal("expected: Main method to be called 'Main'")
       }
       eat(IDKIND)
@@ -140,7 +140,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
         retExpr = exprs.head
         exprs = exprs.tail.reverse // take everything but the 'first' expr, and reverse
       }
-      new MainMethod(new MethodDecl(retType, Identifier("Main"), args, varDecls, exprs, retExpr))
+      new MainMethod(new MethodDecl(retType, Identifier("main"), args, varDecls, exprs, retExpr))
     }
 
     def methodDecl: MethodDecl = {

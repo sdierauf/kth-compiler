@@ -1,5 +1,5 @@
 // Variable declaration test
-method Main(): Unit {
+method main(): Unit {
     // variable declarations
     var a: Int;
     var b: String;

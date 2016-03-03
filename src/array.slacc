@@ -1,5 +1,5 @@
 // Array operations tests
-method Main() : Unit{
+method main() : Unit{
     var x: Int[];
     x = new Int[4];
     x[1] = 1;

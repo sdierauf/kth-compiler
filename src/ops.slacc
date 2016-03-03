@@ -1,5 +1,5 @@
 // Basic arithmetic operations
-method Main(): Unit {
+method main(): Unit {
 
     // base versions
     1 + 2;
