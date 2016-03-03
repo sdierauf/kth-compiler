@@ -120,6 +120,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       eat(RPAREN)
       eat(COLON)
       val retType = typeDecl
+      eat(EQSIGN)
       eat(LBRACE)
       var varDecls : List[VarDecl] = List()
       while (currentToken.kind == VAR) {
