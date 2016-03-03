@@ -221,26 +221,26 @@ object Parser extends Pipeline[Iterator[Token], Program] {
     // expr.length
     // expr.identifier(expr, ..., expr)
     var lhs = orExpr
-      while (currentToken.kind == DOT) {
-        eat(DOT)
-        if (currentToken.kind == LENGTH) {
-          eat(LENGTH)
-          return new ArrayLength(lhs)
-        } else if (currentToken.kind == IDKIND) {
-          // then we have a method call
-          val methodName = new Identifier(getString(currentToken))
-          eat(IDKIND)
-          var args: List[ExprTree] = List()
-          eat(LPAREN)
-          while (currentToken.kind != RPAREN) {
-            val a = orExpr
-            args = args :+ a
-            if (currentToken.kind != RPAREN) eat(COMMA)
-          }
-          eat(RPAREN)
-          return new MethodCall(lhs, methodName, args)
-        }
-      }
+//      while (currentToken.kind == DOT) {
+//        eat(DOT)
+//        if (currentToken.kind == LENGTH) {
+//          eat(LENGTH)
+//          return new ArrayLength(lhs)
+//        } else if (currentToken.kind == IDKIND) {
+//          // then we have a method call
+//          val methodName = new Identifier(getString(currentToken))
+//          eat(IDKIND)
+//          var args: List[ExprTree] = List()
+//          eat(LPAREN)
+//          while (currentToken.kind != RPAREN) {
+//            val a = orExpr
+//            args = args :+ a
+//            if (currentToken.kind != RPAREN) eat(COMMA)
+//          }
+//          eat(RPAREN)
+//          return new MethodCall(lhs, methodName, args)
+//        }
+//      }
       lhs
     }
 
@@ -256,12 +256,33 @@ object Parser extends Pipeline[Iterator[Token], Program] {
     }
 
     def andExpr: ExprTree = {
-      // andExpr: compareExpr (&& compareExpr)*
-      var lhs = compareExpr
+      // andExpr: eqExpr (&& eqExpr)*
+      var lhs = eqExpr
       while (currentToken.kind == AND) {
         eat(AND)
-        var rhs = compareExpr
+        var rhs = eqExpr
         lhs = And(lhs, rhs)
+      }
+      lhs
+    }
+
+    /**
+      * From highest priority to lowest: !, then '*' and /, then + and -, then < and ==, then &&, then ||.
+      */
+
+    def eqExpr: ExprTree = {
+      // eqExpr: compareExpr ((< | ==) compareExpr)*
+      var lhs = compareExpr
+      while (currentToken.kind == LESSTHAN || currentToken.kind == EQUALS) {
+        if (currentToken.kind == LESSTHAN) {
+          eat(LESSTHAN)
+          var rhs = compareExpr
+          lhs = LessThan(lhs, rhs)
+        } else {
+          eat(EQUALS)
+          var rhs = compareExpr
+          lhs = Equals(lhs, rhs)
+        }
       }
       lhs
     }
@@ -284,17 +305,43 @@ object Parser extends Pipeline[Iterator[Token], Program] {
     }
 
     def term: ExprTree = {
-      // term: factor ((* | /) factor)*
-      var lhs = factor
+      // term: methodCall ((* | /) methodCall)*
+      var lhs = methodCall
       while (currentToken.kind == TIMES || currentToken.kind == DIV) {
         if (currentToken.kind == TIMES) {
           eat(TIMES)
-          var rhs = factor
+          var rhs = methodCall
           lhs = Times(lhs, rhs)
         } else {
           eat(DIV)
-          var rhs = factor
+          var rhs = methodCall
           lhs = Div(lhs, rhs)
+        }
+      }
+      lhs
+    }
+
+    def methodCall: ExprTree = {
+      // methodCall: factor (. factor)*
+      var lhs = factor
+      while (currentToken.kind == DOT) {
+        eat(DOT)
+        if (currentToken.kind == LENGTH) {
+          eat(LENGTH) // ????
+          return new ArrayLength(lhs)
+        } else if (currentToken.kind == IDKIND) {
+          // then we have a method call
+          val methodName = new Identifier(getString(currentToken))
+          eat(IDKIND)
+          var args: List[ExprTree] = List()
+          eat(LPAREN)
+          while (currentToken.kind != RPAREN) {
+            val a = orExpr
+            args = args :+ a
+            if (currentToken.kind != RPAREN) eat(COMMA)
+          }
+          eat(RPAREN)
+          lhs = MethodCall(lhs, methodName, args)
         }
       }
       lhs
@@ -389,9 +436,9 @@ object Parser extends Pipeline[Iterator[Token], Program] {
         case IF => {
           eat(IF)
           // if ( Expression ) Expression ( else Expression )?
-          eat(LPAREN)
+          //eat(LPAREN)
           val condition = expr
-          eat(RPAREN)
+          //eat(RPAREN)
           val thenBody = expr
           var elseBody : Option[ExprTree] = None
           if (currentToken.kind == ELSE) {
