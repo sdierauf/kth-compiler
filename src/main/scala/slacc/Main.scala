@@ -7,6 +7,8 @@ import scala.collection.JavaConversions._
 import lexer._
 import ast._
 
+import scala.io.Source
+
 object Main {
 
   def getFileTree(f: File): Stream[File] =
@@ -144,11 +146,18 @@ object Main {
         println()
         val pipeline = Lexer andThen Parser
         val ast = pipeline.run(ctx)(f)
-        val validAst = new File(f.getAbsolutePath() + ".ast")
-        if (ast.toString == validAst.toString()) {
+        val validAstString = Source.fromFile(new File(f.getAbsolutePath() + ".ast")).mkString.trim
+//        val validAstString = Source.fromFile(new File(f.getAbsolutePath() + ".ast"))
+        if (ast.toString == validAstString) {
           println("PASS: " + f.getCanonicalPath() + " was parsed correctly")
         } else {
           println("FAIL: " + f.getCanonicalFile() + " was parsed incorrectly")
+          println("Yours:")
+          println(ast)
+          println("Test:")
+          println(validAstString)
+          println("Diff:")
+          println(validAstString diff ast.toString)
         }
       })
     } else if (ctx.testParse) {
@@ -168,6 +177,7 @@ object Main {
         } else {
           println("FAIL: " + f.getCanonicalFile() + " was parsed incorrectly")
         }
+
       })
     } else {
       ???
