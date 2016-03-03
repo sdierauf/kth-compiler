@@ -1,0 +1,9 @@
+// test boolean stuff
+method Main() : Unit {
+    var b1: Boolean;
+    var b2: Boolean;
+    var b3: Boolean;
+    b1 = true;
+    b2 = false;
+    b3 = b1 && !b2 || true;
+}

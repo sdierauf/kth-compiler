@@ -1,0 +1,11 @@
+// test if else
+method Main() : Unit {
+    if (true) {
+        println("True");
+        if (true) {
+            println("Still true");
+        }
+    } else {
+        println("False");
+    }
+}
