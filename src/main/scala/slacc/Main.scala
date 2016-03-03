@@ -2,11 +2,16 @@ package slacc
 
 import utils._
 import java.io.{PrintWriter, File}
+import scala.collection.JavaConversions._
 
 import lexer._
 import ast._
 
 object Main {
+
+  def getFileTree(f: File): Stream[File] =
+    f #:: (if (f.isDirectory) f.listFiles().toStream.flatMap(getFileTree)
+    else Stream.empty)
 
   def processOptions(args: Array[String]): Context = {
 
@@ -40,6 +45,10 @@ object Main {
 
       case "--tap" :: args =>
         ctx = ctx.copy(doTokens = true, doPrintMain = true, doAST = true)
+        processOption(args)
+
+      case "--testAst" :: args =>
+        ctx = ctx.copy(testAst = true)
         processOption(args)
 
       case f :: args =>
@@ -109,8 +118,10 @@ object Main {
       val pipeline = Lexer andThen Parser
       val ast = pipeline.run(ctx)(ctx.files.head)
       val program = Printer(ast)
-      new PrintWriter("ppt_lhs.slacc") { write(program); close }
-      ctx = ctx.copy(files = new File("ppt_lhs.slacc")::ctx.files)
+      new PrintWriter("ppt_lhs.slacc") {
+        write(program); close
+      }
+      ctx = ctx.copy(files = new File("ppt_lhs.slacc") :: ctx.files)
       val rhsPipe = Lexer andThen Parser
       val rhsAst = pipeline.run(ctx)(ctx.files.head)
       val rhsProgram = Printer(rhsAst)
@@ -121,6 +132,43 @@ object Main {
         println("Test failed.")
         println(program diff rhsProgram)
       }
+    } else if (ctx.testAst) {
+      // try all valids
+      println()
+      println("========== Running tests ==========")
+      println()
+      getFileTree(ctx.files.head).filter(_.getName.endsWith(".slac")).foreach(f => {
+        println()
+        println("Running tests for: " + f.getName())
+        println("------------------")
+        println()
+        val pipeline = Lexer andThen Parser
+        val ast = pipeline.run(ctx)(f)
+        val validAst = new File(f.getAbsolutePath() + ".ast")
+        if (ast.toString == validAst.toString()) {
+          println("PASS: " + f.getCanonicalPath() + " was parsed correctly")
+        } else {
+          println("FAIL: " + f.getCanonicalFile() + " was parsed incorrectly")
+        }
+      })
+    } else if (ctx.testParse) {
+      println()
+      println("========== Running tests ==========")
+      println()
+      getFileTree(ctx.files.head).filter(_.getName.endsWith(".slac")).foreach(f => {
+        println()
+        println("Running tests for: " + f.getName())
+        println("------------------")
+        println()
+        val pipeline = Lexer andThen Parser
+        val ast = pipeline.run(ctx)(f)
+        val validAst = new File(f.getAbsolutePath() + ".ast")
+        if (ast.toString == validAst.toString()) {
+          println("PASS: " + f.getCanonicalPath() + " was parsed correctly")
+        } else {
+          println("FAIL: " + f.getCanonicalFile() + " was parsed incorrectly")
+        }
+      })
     } else {
       ???
     }
