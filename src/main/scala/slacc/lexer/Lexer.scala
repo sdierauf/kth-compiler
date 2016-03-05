@@ -19,6 +19,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
     ("if", IF), ("else", ELSE), ("length", LENGTH), ("self", SELF), ("new", NEW), ("println", PRINTLN),
     ("strOf", STROF), ("method", METHOD))
 
+
   def run(ctx: Context)(f: File): Iterator[Token] = {
     val source = Source.fromFile(f)
 
@@ -29,6 +30,8 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
       var pos = source.pos
       var tempPos = pos
       var shouldReturnEOF = false
+      var inComment = false
+      var commentStart = source.pos
 
       def hasNext : Boolean = {
         // cant use source.hasNext here alone if we want to get the EOF
@@ -53,15 +56,15 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
         if (shouldReturnEOF) {
           return new Token(EOF).setPos(f, pos)
         }
-        if (c.isSpaceChar) {
-          var isWhiteSpace = true
-          while (hasNext && isWhiteSpace){ // skip white space
+        if (c.isWhitespace) {
+          var isSpaceChar = true
+          while (hasNext && isSpaceChar){ // skip white space
             safeInc
-            if (!c.isSpaceChar){
-              isWhiteSpace = false
+            if (!c.isWhitespace){
+              isSpaceChar = false
             }
           }
-          if (isWhiteSpace) { // we've reached the end of the file
+          if (isSpaceChar) { // we've reached the end of the file
             return new Token(EOF).setPos(f, tempPos)
           }
 
@@ -70,6 +73,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
         var tokenStart = source.pos // could be a token, might still be a comment
 
         if (c.equals('/')){
+          commentStart = source.pos
           safeInc
           if (c.equals('/')) {
             while (hasNext && !c.equals('\n')) {
@@ -77,19 +81,24 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
               safeInc
             }
           } else if (c.equals('*')) {
-            var finished = false
-            while (hasNext && !finished) {
+            inComment = true
+            while (hasNext && inComment) {
               safeInc
               if (c.equals('*') && hasNext){ // have to look ahead
                 safeInc
                 if (c.equals('/')){
-                  finished = true
+                  inComment = false
+                  safeInc
                 }
               }
             }
           } else {
             return new Token(DIV).setPos(f, tokenStart)
           }
+        }
+
+        if (inComment) { // multiline comment never closed
+          fatal("Expected '*/' but found EOF (beginning at " + new Token(BAD).setPos(f, commentStart).position + ").")
         }
         
         tokenStart = source.pos
@@ -170,6 +179,8 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
         }
 
         // somehow nothing happened?
+        if (!c.isWhitespace) fatal("Unexpected token  '" + c + "' at " + new Token(BAD).setPos(f, tokenStart).position)
+
         safeInc
         next
 
