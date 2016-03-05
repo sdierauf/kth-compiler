@@ -217,35 +217,8 @@ object Parser extends Pipeline[Iterator[Token], Program] {
       new ClassDecl(classIdent, inheritsFrom, variables, methods)
     }
 
-    def expr: ExprTree = { // think method calls should have lowest precedence
-    // expr.length
-    // expr.identifier(expr, ..., expr)
-    var lhs = orExpr
-//      while (currentToken.kind == DOT) {
-//        eat(DOT)
-//        if (currentToken.kind == LENGTH) {
-//          eat(LENGTH)
-//          return new ArrayLength(lhs)
-//        } else if (currentToken.kind == IDKIND) {
-//          // then we have a method call
-//          val methodName = new Identifier(getString(currentToken))
-//          eat(IDKIND)
-//          var args: List[ExprTree] = List()
-//          eat(LPAREN)
-//          while (currentToken.kind != RPAREN) {
-//            val a = orExpr
-//            args = args :+ a
-//            if (currentToken.kind != RPAREN) eat(COMMA)
-//          }
-//          eat(RPAREN)
-//          return new MethodCall(lhs, methodName, args)
-//        }
-//      }
-      lhs
-    }
-
-    def orExpr: ExprTree = {
-      // orExpr: andExpr (|| andExpr)*
+    def expr: ExprTree = {
+      // expr: andExpr (|| andExpr)*
       var lhs = andExpr
       while (currentToken.kind == OR) {
         eat(OR)
@@ -336,7 +309,7 @@ object Parser extends Pipeline[Iterator[Token], Program] {
           var args: List[ExprTree] = List()
           eat(LPAREN)
           while (currentToken.kind != RPAREN) {
-            val a = orExpr
+            val a = expr
             args = args :+ a
             if (currentToken.kind != RPAREN) eat(COMMA)
           }
