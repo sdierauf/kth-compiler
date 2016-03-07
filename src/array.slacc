@@ -1,9 +1,10 @@
 // Array operations tests
-method main() : Unit{
+method main() : Unit = {
     var x: Int[];
+    var y: Int;
     x = new Int[4];
     x[1] = 1;
     x[2] = x[1];
     x[3] = x[2] + 2;
-    x.length;
-}
+    y = x.length + 1 + 2 + 3;
+    }

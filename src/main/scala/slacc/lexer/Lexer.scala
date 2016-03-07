@@ -30,15 +30,18 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
       var pos = source.pos
       var tempPos = pos
       var shouldReturnEOF = false
+      var returnedEOF = false
       var inComment = false
       var commentStart = source.pos
 
       def hasNext : Boolean = {
         // cant use source.hasNext here alone if we want to get the EOF
-        if(!source.hasNext && !shouldReturnEOF){ 
+        if(!source.hasNext && !shouldReturnEOF){
           shouldReturnEOF = true
           return true
-        } else {
+        } else if (!source.hasNext && !returnedEOF && shouldReturnEOF) {
+          return true
+        }  else {
           return source.hasNext 
         }
       }
@@ -54,6 +57,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
       def next : Token = {
         // invariant: every case will increment c before the next loop
         if (shouldReturnEOF) {
+          returnedEOF = true
           return new Token(EOF).setPos(f, pos)
         }
         if (c.isWhitespace) {
@@ -65,6 +69,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
             }
           }
           if (isSpaceChar) { // we've reached the end of the file
+            returnedEOF = true
             return new Token(EOF).setPos(f, tempPos)
           }
 
@@ -125,6 +130,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
         if (c.equals('&')) {
           safeInc
           if (c.equals('&')){
+            safeInc
             return new Token(AND).setPos(f, tokenStart)
           } else {
             return new Token(BAD).setPos(f, tokenStart)
@@ -175,6 +181,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
         }
 
         if (!hasNext) {
+          returnedEOF = true
           return new Token(EOF).setPos(f, tokenStart)
         }
 
