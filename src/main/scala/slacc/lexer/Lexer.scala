@@ -30,7 +30,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
       var pos = source.pos
       var tempPos = pos
       var returnEOF = false
-//      var returnedEOF = false
+      var EOFreturned = false
       var inComment = false
       var commentStart = source.pos
 
@@ -38,8 +38,9 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
         // cant use source.hasNext here alone if we want to get the EOF
         if (source.hasNext) {
           return true
-        } else if (!returnEOF) {
-          returnEOF = true
+        } else if (!source.hasNext && EOFreturned) {
+          return false
+        } else if (!EOFreturned) {
           return true
         }
         return false
@@ -58,12 +59,13 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
       def next : Token = {
 
         if (returnEOF) {
+          EOFreturned = true
           return new Token(EOF).setPos(f, pos)
         }
 
         // loop through any white space
         if (c.isWhitespace) {
-          while (c.isWhitespace && hasNext) {
+          while (c.isWhitespace && source.hasNext) {
             safeInc
           }
         }
@@ -75,13 +77,13 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
           commentStart = source.pos
           safeInc
           if (c.equals('/')) {
-            while (hasNext && !c.equals('\n')) {
+            while (source.hasNext && !c.equals('\n')) {
               // single line comment case
               safeInc
             }
           } else if (c.equals('*')) {
             inComment = true
-            while (hasNext && inComment) {
+            while (source.hasNext && inComment) {
               safeInc
               if (c.equals('*') && hasNext){ // have to look ahead
                 safeInc
@@ -104,6 +106,7 @@ object Lexer extends Pipeline[File, Iterator[Token]] {
 
         // check again if we're at the EOF
         if (returnEOF) {
+          EOFreturned = true
           return new Token(EOF).setPos(f, tokenStart)
         }
 
