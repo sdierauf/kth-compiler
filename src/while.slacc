@@ -1,5 +1,5 @@
 // test while loop
-method main() : Unit {
+method main() : Unit = {
     while (true) {
         println("Infinite loop")
     }
