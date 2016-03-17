@@ -1,5 +1,5 @@
 // test boolean stuff
-method main() : Unit {
+method main() : Unit = {
     var b1: Boolean;
     var b2: Boolean;
     var b3: Boolean;

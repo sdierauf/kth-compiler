@@ -7,4 +7,4 @@ method main() : Unit = {
     x[2] = x[1];
     x[3] = x[2] + 2;
     y = x.length + 1 + 2 + 3;
-    }
+}
