@@ -35,7 +35,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
 //      case n: MethodDecl => collectMethodDecl(n, scope)
 //      case n: Formal => collectFormal(n, scope)
 //      case n: Identifier => collectIdentifier(n, scope)
-      case n: _ => sys.error("tried to collect something that needs to know its class symbol")
+      case n: _ => sys.error("tried to collect something that needs to know its symbol scope")
     }
   }
 
@@ -44,6 +44,12 @@ object NameAnalysis extends Pipeline[Program, Program] {
   }
 
   def collectClassDecl(n: ClassDecl, scope: GlobalScope): Unit = {
+    val className = n.id.toString
+    val s = new ClassSymbol(className)
+    scope.classes(className) -> s
+
+
+
 
   }
 
