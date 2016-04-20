@@ -37,8 +37,8 @@ object NameAnalysis extends Pipeline[Program, Program] {
 
     def collectClassDecl(klass: ClassDecl, scope: GlobalScope): Unit = {
       val className = klass.id.toString
+      val symbol = new ClassSymbol(className)
       def addClass(): Unit = {
-        val symbol = new ClassSymbol(className)
         scope.classes + (className -> symbol)
         klass.vars.foreach(v => collectVarDecl(v, symbol))
         klass.methods.foreach(m => collectMethodDecl(m , symbol))
@@ -48,27 +48,28 @@ object NameAnalysis extends Pipeline[Program, Program] {
           fatal("collectClassDecl: " + className + " already declared", klass)
         case None =>
           klass.parent match {
-            case Some(v: ClassDecl) => {
-              if (scope.lookupClass(v.id.toString).isEmpty) {
+            case Some(v) => {
+              if (scope.lookupClass(v.value).isEmpty) {
                 fatal("collectClassDecl:" + className + " parent is not defined", klass)
               }
-              if (hasInheritanceCycle(klass)) {
+              symbol.parent = scope.lookupClass(v.value)
+              if (hasInheritanceCycle(symbol, scope)) {
                 fatal("collectClassDecl: " + className + " has an inheritanceCyckle", klass)
               }
-              addClass()
+
             }
             case None => addClass()
           }
       }
     }
 
-    def hasInheritanceCycle(klass: ClassDecl): Boolean = {
-      var visited: Set[ClassDecl] = Set()
-      visited = visited + klass
-      var currentClass = klass.parent
+    def hasInheritanceCycle(symbol: ClassSymbol, scope: GlobalScope): Boolean = {
+      var visited: Set[ClassSymbol] = Set()
+      visited = visited + symbol
+      var currentClass = symbol.parent
       while (currentClass.isDefined) {
         currentClass match {
-          case Some(k: ClassDecl) => {
+          case Some(k) => {
             if (visited.contains(k)) {
               return false
             }
