@@ -56,7 +56,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
               if (hasInheritanceCycle(symbol, scope)) {
                 fatal("collectClassDecl: " + className + " has an inheritanceCyckle", klass)
               }
-
+              addClass()
             }
             case None => addClass()
           }
@@ -86,10 +86,19 @@ object NameAnalysis extends Pipeline[Program, Program] {
       val symbol = new VariableSymbol(varName)
       scope match {
         case s: ClassSymbol => {
+          if (s.lookupVar(varName).isDefined) {
+            fatal("collectVarDecl: class " + s.name + " already had a variable named " + varName, n)
+          }
           s.members + (varName -> symbol)
         }
         case s: MethodSymbol => {
+          // it's ok if has same name as a class variable
+          // not ok if it's in declared vars
+          if (s.lookupVar(varName).isDefined) {
+            fatal("collectVarDecl: method " + s.name + " already had a variable named " + varName, n)
+          }
           s.members + (varName -> symbol)
+
         }
         case s: _ => {
           sys.error("Collected a variable not in a Class or MethodSymbol!!")
@@ -100,27 +109,29 @@ object NameAnalysis extends Pipeline[Program, Program] {
     def collectMethodDecl(method: MethodDecl, scope: ClassSymbol): Unit = {
       val methodName = method.id.toString
       val symbol = new MethodSymbol(methodName, scope)
-      scope.methods + (methodName -> symbol)
-      method.args.foreach(arg => collectFormal(arg, symbol))
-      method.vars.foreach(v => collectVarDecl(v, symbol))
+      def addMethod(): Unit = {
+        scope.methods + (methodName -> symbol)
+        method.args.foreach(arg => collectFormal(arg, symbol))
+        method.vars.foreach(v => collectVarDecl(v, symbol))
+      }
+      // TODO: How the fuck do we know if it's overloaded or not?!?
+      scope.lookupMethod(methodName) match {
+        case Some(m) => {
+          fatal("collectMethodDecl: method " + methodName + " was already defined!", method)
+        }
+        case None => addMethod()
+      }
+
     }
 
     def collectFormal(n: Formal, scope: MethodSymbol): Unit = {
+      // it's ok if it has the same name as a class variable...
       val formalName = n.id.toString
       val symbol = new VariableSymbol(formalName)
-      scope.argList = scope.argList :+ symbol
-    }
-
-    def collectIdentifier(n: Identifier, scope: Symbol): Unit = {
-      scope match {
-        case s: ClassSymbol => {
-          ???
-        }
-        case s: MethodSymbol => {
-          ???
-        }
+      if (scope.argList.contains(symbol)) {
+        fatal("collectFormal: argList already had a formal with this name!", n)
       }
-      ???
+      scope.argList = scope.argList :+ symbol
     }
 
 
@@ -129,6 +140,9 @@ object NameAnalysis extends Pipeline[Program, Program] {
 
 
     // Step 2: Attach symbols to identifiers (except method calls) in method bodies
+//    var p = new Identifier("poop")
+    // TODO: what the fuck does attach mean??1?????????
+
     // (Step 3:) Print tree with symbol ids for debugging
     if (ctx.doSymbolIds) {
       //print tree with symbol ids
