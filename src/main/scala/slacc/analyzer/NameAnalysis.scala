@@ -39,8 +39,9 @@ object NameAnalysis extends Pipeline[Program, Program] {
     }
   }
 
-  def collectMainMethod(n: MainMethod, scope: GlobalScope): Unit ={
-
+  def collectMainMethod(n: MainMethod, scope: GlobalScope): Unit = {
+    scope.mainClass = new ClassSymbol(n.id.toString)
+    collectMethodDecl(n.main, scope.mainClass)
   }
 
   def collectClassDecl(klass: ClassDecl, scope: GlobalScope): Unit = {
@@ -52,12 +53,17 @@ object NameAnalysis extends Pipeline[Program, Program] {
   }
 
   def collectVarDecl(n: VarDecl, scope: Symbol): Unit = {
+    val varName = n.id.toString
+    val symbol = new VariableSymbol(varName)
     scope match {
       case s: ClassSymbol => {
-
+        s.members + (varName -> symbol)
       }
       case s: MethodSymbol => {
-
+        s.members + (varName -> symbol)
+      }
+      case s: _ => {
+        sys.error("Collected a variable not in a Class or MethodSymbol!!")
       }
     }
   }
@@ -65,22 +71,28 @@ object NameAnalysis extends Pipeline[Program, Program] {
   def collectMethodDecl(method: MethodDecl, scope: ClassSymbol): Unit = {
     val methodName = method.id.toString
     val symbol = new MethodSymbol(methodName, scope)
+    scope.methods + (methodName -> symbol)
+    method.args.foreach(arg => collectFormal(arg, symbol))
+    method.vars.foreach(v => collectVarDecl(v, symbol))
 
   }
 
   def collectFormal(n: Formal, scope: MethodSymbol): Unit = {
-
+    val formalName = n.id.toString
+    val symbol = new VariableSymbol(formalName)
+    scope.argList :+ symbol
   }
 
   def collectIdentifier(n: Identifier, scope: Symbol): Unit = {
     scope match {
       case s: ClassSymbol => {
-
+        ???
       }
       case s: MethodSymbol => {
-
+        ???
       }
     }
+    ???
   }
 
 }

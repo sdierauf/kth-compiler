@@ -55,7 +55,8 @@ object Symbols {
     var argList: List[VariableSymbol] = Nil
     var overridden: Option[MethodSymbol] = None
 
-    def lookupVar(n: String): Option[VariableSymbol] = members.get(n) orElse params.get(n)
+    def lookupVar(n: String): Option[VariableSymbol] = (members.get(n) orElse params.get(n)
+      orElse classSymbol.members.get(n))
   }
 
   class VariableSymbol(val name: String) extends Symbol
