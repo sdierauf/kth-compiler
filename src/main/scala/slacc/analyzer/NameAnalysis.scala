@@ -43,14 +43,12 @@ object NameAnalysis extends Pipeline[Program, Program] {
 
   }
 
-  def collectClassDecl(n: ClassDecl, scope: GlobalScope): Unit = {
-    val className = n.id.toString
-    val s = new ClassSymbol(className)
-    scope.classes(className) -> s
-
-
-
-
+  def collectClassDecl(klass: ClassDecl, scope: GlobalScope): Unit = {
+    val className = klass.id.toString
+    val symbol = new ClassSymbol(className)
+    scope.classes + (className -> symbol)
+    klass.vars.foreach(v => collectVarDecl(v, symbol))
+    klass.methods.foreach(m => collectMethodDecl(m , symbol))
   }
 
   def collectVarDecl(n: VarDecl, scope: Symbol): Unit = {
@@ -64,7 +62,9 @@ object NameAnalysis extends Pipeline[Program, Program] {
     }
   }
 
-  def collectMethodDecl(n: MethodDecl, scope: ClassSymbol): Unit = {
+  def collectMethodDecl(method: MethodDecl, scope: ClassSymbol): Unit = {
+    val methodName = method.id.toString
+    val symbol = new MethodSymbol(methodName, scope)
 
   }
 
