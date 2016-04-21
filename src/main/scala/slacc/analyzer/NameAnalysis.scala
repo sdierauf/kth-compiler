@@ -15,6 +15,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
     // Step 1: Collect symbols in declarations
     var globalScope = new GlobalScope()
 
+    // ============ Collect =============
     def collectSymbols(node: Symbolic, scope: GlobalScope): Unit = {
       node match {
         case n: MainMethod => collectMainMethod(n, scope)
@@ -137,11 +138,89 @@ object NameAnalysis extends Pipeline[Program, Program] {
     }
 
 
-    prog.classes.foreach(classdecl => collectSymbols(classdecl, globalScope))
+    // ============== Attach ================
+
+    def attachSymbols(node: Tree, scope: GlobalScope): Unit = {
+      node match {
+        case n: MainMethod => attachMainMethod(n, scope)
+        case n: ClassDecl => attachClassDecl(n, scope)
+        //      case n: VarDecl => collectVarDecl(n, scope)
+        //      case n: MethodDecl => collectMethodDecl(n, scope)
+        //      case n: Formal => collectFormal(n, scope)
+        //      case n: Identifier => collectIdentifier(n, scope)
+        case n: _ => sys.error("tried to attach something that needs a more specific scope")
+      }
+    }
+
+    def attachMainMethod(main: MainMethod, scope: GlobalScope): Unit = {
+
+    }
+
+    def attachClassDecl(classDecl: ClassDecl, scope: GlobalScope): Unit = {
+      val className = classDecl.id.toString
+      scope.lookupClass(className) match {
+        case Some(klass) => classDecl.setSymbol(klass)
+        case None => sys.error("attachClassDecl: No matching class for ID")
+      }
+      classDecl.methods.foreach(method => attachMethod(method, classDecl.getSymbol))
+      classDecl.vars.foreach(v => attachVariable(v, classDecl.getSymbol))
+    }
+
+    def attachMethod(method: MethodDecl, scope: ClassSymbol): Unit = {
+      val methodName = method.id.toString
+      val symbol = scope.lookupMethod(methodName)
+      symbol match {
+        case Some(z) => method.setSymbol(z)
+        case None => sys.error("attachVariable: No matching variable in class")
+      }
+      method.args.foreach(formal => attachFormal(formal, method.getSymbol))
+      method.vars.foreach(v => attachVariable(v, method.getSymbol))
+      attachRetType(method.retType, method.getSymbol)
+    }
+
+    def attachRetType(tpe: TypeTree, method: MethodSymbol): Unit = {
+      tpe match {
+
+      }
+    }
+
+    def attachVariable(v: VarDecl, scope: Symbol): Unit = {
+      val varName = v.id.toString
+      scope match {
+        case s: ClassSymbol => {
+          val symbol = s.lookupVar(varName)
+          symbol match {
+            case Some(z) => v.setSymbol(z)
+            case None => sys.error("attachVariable: No matching variable in class")
+          }
+        }
+        case s: MethodSymbol => {
+          val symbol = s.lookupVar(varName)
+          symbol match {
+            case Some(z) => v.setSymbol(z)
+            case None => sys.error("attachVariable: No matching variable in method")
+          }
+        }
+        case s: _ => {
+          sys.error("attachVariable: tried to attach with something that shouldn't have variables")
+        }
+      }
+    }
+
+
+
+
+
+    // main
+
+    // collect symbols
+    prog.classes.foreach(classDecl => collectSymbols(classDecl, globalScope))
     collectSymbols(prog.main, globalScope)
 
-
     // Step 2: Attach symbols to identifiers (except method calls) in method bodies
+    // DEPLOY SYMBOLS
+    prog.classes.foreach(classDecl => attachSymbols(classDecl, globalScope))
+    attachSymbols(prog.main, globalScope)
 //    var p = new Identifier("poop")
     // TODO: what the fuck does attach mean??1?????????
 
