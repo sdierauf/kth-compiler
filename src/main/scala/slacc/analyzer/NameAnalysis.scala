@@ -32,12 +32,14 @@ object NameAnalysis extends Pipeline[Program, Program] {
         fatal("collectMainMethod: Main class already declared", n)
       }
       scope.mainClass = new ClassSymbol(n.id.toString)
+      n.setSymbol(scope.mainClass)
       collectMethodDecl(n.main, scope.mainClass)
     }
 
     def collectClassDecl(klass: ClassDecl, scope: GlobalScope): Unit = {
       val className = klass.id.toString
       val symbol = new ClassSymbol(className)
+      klass.setSymbol(symbol)
       def addClass(): Unit = {
         scope.classes + (className -> symbol)
         klass.vars.foreach(v => collectVarDecl(v, symbol))
@@ -146,6 +148,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
     // (Step 3:) Print tree with symbol ids for debugging
     if (ctx.doSymbolIds) {
       //print tree with symbol ids
+
     }
     // Make sure you check all constraints
 
