@@ -4,6 +4,14 @@ package ast
 import Trees._
 
 object Printer {
+
+  var getSymbolIds = false
+
+  def applyWithSymbolIds(t: Tree): String = {
+    getSymbolIds = true
+    apply(t)
+  }
+
   def apply(t: Tree): String = {
     t match {
       case t: Program => printProgram(t)
@@ -183,7 +191,10 @@ object Printer {
   }
 
   def printIdentifier(t: Identifier): String = {
-    t.value
+    getSymbolIds match {
+      case true => t.value + "#" + t.getSymbol.id
+      case false => t.value
+    }
   }
 
   def printSelf(t: Self): String = {

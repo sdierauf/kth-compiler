@@ -4,6 +4,7 @@ package analyzer
 import utils._
 import ast.Trees._
 import Symbols._
+import slacc.ast.Printer
 
 
 object NameAnalysis extends Pipeline[Program, Program] {
@@ -33,7 +34,6 @@ object NameAnalysis extends Pipeline[Program, Program] {
         fatal("collectMainMethod: Main class already declared", n)
       }
       scope.mainClass = new ClassSymbol(n.id.toString)
-      n.setSymbol(scope.mainClass)
       collectMethodDecl(n.main, scope.mainClass)
     }
 
@@ -153,7 +153,11 @@ object NameAnalysis extends Pipeline[Program, Program] {
     }
 
     def attachMainMethod(main: MainMethod, scope: GlobalScope): Unit = {
-
+      scope.lookupClass(main.id.value) match {
+        case Some(s) => main.setSymbol(s)
+        case None => sys.error("attachMainMethod: No symbol for main class")
+      }
+      attachMethod(main.main, main.getSymbol)
     }
 
     def attachClassDecl(classDecl: ClassDecl, scope: GlobalScope): Unit = {
@@ -179,8 +183,28 @@ object NameAnalysis extends Pipeline[Program, Program] {
     }
 
     def attachRetType(tpe: TypeTree, method: MethodSymbol): Unit = {
-      tpe match {
+      attachTypeTree(tpe)
+    }
 
+    def attachTypeTree(tpe: TypeTree): Unit = {
+      tpe match {
+        case tpe: Identifier => {
+          // look up in list of classes
+          globalScope.lookupClass(tpe.value) match {
+            case Some(z) => tpe.setSymbol(z)
+            case None => sys.error("attachTypeTree: No matching class for identifier")
+          }
+        }
+        case _ => // do nothing
+      }
+    }
+
+    def attachFormal(formal: Formal, method: MethodSymbol): Unit = {
+      // need to attach the id of the formal AND the type
+      attachTypeTree(formal.tpe)
+      method.lookupVar(formal.id.value) match {
+        case Some(s) => formal.id.setSymbol(s)
+        case None => sys.error("attachFormal: no matching symbol for id")
       }
     }
 
@@ -221,13 +245,12 @@ object NameAnalysis extends Pipeline[Program, Program] {
     // DEPLOY SYMBOLS
     prog.classes.foreach(classDecl => attachSymbols(classDecl, globalScope))
     attachSymbols(prog.main, globalScope)
-//    var p = new Identifier("poop")
-    // TODO: what the fuck does attach mean??1?????????
 
     // (Step 3:) Print tree with symbol ids for debugging
     if (ctx.doSymbolIds) {
       //print tree with symbol ids
-
+      val out = Printer.applyWithSymbolIds(prog)
+      println(out)
     }
     // Make sure you check all constraints
 
