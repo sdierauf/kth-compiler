@@ -18,6 +18,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
 
     // ============ Collect =============
     def collectSymbols(node: Symbolic, scope: GlobalScope): Unit = {
+      // should collect all class symbols before symbolzing their methods.
       node match {
         case n: MainMethod => collectMainMethod(n, scope)
         case n: ClassDecl => collectClassDecl(n, scope)
