@@ -191,9 +191,15 @@ object Printer {
   }
 
   def printIdentifier(t: Identifier): String = {
-    getSymbolIds match {
-      case true => t.value + "#" + t.getSymbol.id
-      case false => t.value
+    if (getSymbolIds) {
+      try {
+        t.value + "#" + t.getSymbol.id.toString
+      } catch {
+        case ex : RuntimeException => { println(ex); t.value + "??" }
+        case e : Exception => { println(e); t.value + "??" }
+      }
+    } else {
+      t.value
     }
   }
 

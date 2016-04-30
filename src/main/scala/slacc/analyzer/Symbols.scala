@@ -8,6 +8,7 @@ object Symbols {
     private var _sym: Option[S] = None
 
     def setSymbol(sym: S): this.type = {
+      println("setSymbol: attaching " + sym.name)
       _sym = Some(sym)
       this
     }

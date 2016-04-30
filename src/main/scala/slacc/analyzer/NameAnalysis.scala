@@ -126,6 +126,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
         scope.methods += (methodName -> symbol)
         method.args.foreach(arg => collectFormal(arg, symbol))
         method.vars.foreach(v => collectVarDecl(v, symbol))
+        method.exprs.foreach(expr => collectExpr(expr, symbol))
       }
       // TODO: How the fuck do we know if it's overloaded or not?!?
       scope.lookupMethod(methodName) match {
@@ -134,7 +135,12 @@ object NameAnalysis extends Pipeline[Program, Program] {
         }
         case None => addMethod()
       }
+    }
 
+    def collectExpr(expr: ExprTree, symbol: MethodSymbol): Unit = {
+      expr match {
+
+      }
     }
 
     def collectFormal(n: Formal, scope: MethodSymbol): Unit = {
@@ -164,7 +170,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
 
     def attachMainMethod(main: MainMethod, scope: GlobalScope): Unit = {
       scope.lookupClass(main.id.value) match {
-        case Some(s) => main.setSymbol(s)
+        case Some(s) => main.setSymbol(s); main.id.setSymbol(s)
         case None => sys.error("attachMainMethod: No symbol for main class")
       }
       attachMethod(main.main, main.getSymbol)
@@ -173,7 +179,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
     def attachClassDecl(classDecl: ClassDecl, scope: GlobalScope): Unit = {
       val className = classDecl.id.value
       scope.lookupClass(className) match {
-        case Some(klass) => classDecl.setSymbol(klass)
+        case Some(klass) => classDecl.setSymbol(klass); classDecl.id.setSymbol(klass)
         case None => sys.error("attachClassDecl: No matching class for ID")
       }
       classDecl.methods.foreach(method => attachMethod(method, classDecl.getSymbol))
@@ -184,7 +190,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
       val methodName = method.id.value
       val symbol = scope.lookupMethod(methodName)
       symbol match {
-        case Some(z) => method.setSymbol(z)
+        case Some(z) => method.setSymbol(z); method.id.setSymbol(z)
         case None => sys.error("attachVariable: No matching variable in class")
       }
       method.args.foreach(formal => attachFormal(formal, method.getSymbol))
@@ -201,7 +207,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
         case tpe: Identifier => {
           // look up in list of classes
           globalScope.lookupClass(tpe.value) match {
-            case Some(z) => tpe.setSymbol(z)
+            case Some(z) => tpe.setSymbol(z);
             case None => sys.error("attachTypeTree: No matching class for identifier")
           }
         }
@@ -213,7 +219,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
       // need to attach the id of the formal AND the type
       attachTypeTree(formal.tpe)
       method.lookupVar(formal.id.value) match {
-        case Some(s) => formal.id.setSymbol(s)
+        case Some(s) => formal.id.setSymbol(s);
         case None => sys.error("attachFormal: no matching symbol for id")
       }
     }
@@ -224,14 +230,14 @@ object NameAnalysis extends Pipeline[Program, Program] {
         case s: ClassSymbol => {
           val symbol = s.lookupVar(varName)
           symbol match {
-            case Some(z) => v.setSymbol(z)
+            case Some(z) => v.setSymbol(z); v.id.setSymbol(z)
             case None => sys.error("attachVariable: No matching variable:" + varName + " in  class: " + s.name )
           }
         }
         case s: MethodSymbol => {
           val symbol = s.lookupVar(varName)
           symbol match {
-            case Some(z) => v.setSymbol(z)
+            case Some(z) => v.setSymbol(z); v.id.setSymbol(z)
             case None => sys.error("attachVariable: No matching variable: " + varName + " in method: " + s.name)
           }
         }
@@ -264,6 +270,8 @@ object NameAnalysis extends Pipeline[Program, Program] {
     // DEPLOY SYMBOLS
     prog.classes.foreach(classDecl => attachSymbols(classDecl, globalScope))
     attachSymbols(prog.main, globalScope)
+
+    prog.classes.foreach(classDecl => println("class " + classDecl.id.value + "#" + classDecl.getSymbol.id))
 
     // (Step 3:) Print tree with symbol ids for debugging
     if (ctx.doSymbolIds) {
