@@ -16,19 +16,45 @@ object NameAnalysis extends Pipeline[Program, Program] {
     // Step 1: Collect symbols in declarations
     var globalScope = new GlobalScope()
 
-    // ============ Collect =============
-    def collectSymbols(node: Symbolic, scope: GlobalScope): Unit = {
-      // should collect all class symbols before symbolzing their methods.
-      node match {
-        case n: MainMethod => collectMainMethod(n, scope)
-        case n: ClassDecl => collectClassDecl(n, scope)
-        //      case n: VarDecl => collectVarDecl(n, scope)
-        //      case n: MethodDecl => collectMethodDecl(n, scope)
-        //      case n: Formal => collectFormal(n, scope)
-        //      case n: Identifier => collectIdentifier(n, scope)
-        case n: _ => sys.error("tried to collect something that needs to know its symbol scope")
+    def addClassSymbols(klass: ClassDecl, scope: GlobalScope): Unit = {
+      val className = klass.id.toString
+      val symbol = new ClassSymbol(className)
+      scope.lookupClass(className) match {
+        case Some(v) => fatal("collectClassDecl2: already a class with that name defined in the scope");
+        case None => scope.classes += (className -> symbol)
       }
     }
+
+    def checkParent(klass: ClassDecl, scope: GlobalScope): Unit = {
+      var symbol = scope.lookupClass(klass.id.value).get
+      klass.parent match {
+        case Some(p) => {
+          val parent = scope.lookupClass(p.value)
+          if (parent.isEmpty) {
+            fatal("checkParent: no matching symbol for class " + klass.id.value + " parent!!")
+          }
+          symbol.parent = parent
+          // check for inheritance cycle
+          if (hasInheritanceCycle(parent.get, scope)) {
+            fatal("checkParent: parent of " + klass.id.value + "was part of an inheritance cycle!!")
+          }
+        }
+        case None =>
+      }
+    }
+
+    // ============ Collect =============
+//    def collectSymbols(node: Symbol, scope: GlobalScope): Unit = {
+//      node match {
+//        case n: MainMethod => collectMainMethod(n, scope)
+//        case n: ClassDecl => collectClassDecl(n, scope)
+//        //      case n: VarDecl => collectVarDecl(n, scope)
+//        //      case n: MethodDecl => collectMethodDecl(n, scope)
+//        //      case n: Formal => collectFormal(n, scope)
+//        //      case n: Identifier => collectIdentifier(n, scope)
+//        case _ => sys.error("tried to collect something that needs to know its symbol scope")
+//      }
+//    }
 
     def collectMainMethod(n: MainMethod, scope: GlobalScope): Unit = {
       if (scope.mainClass != null) {
@@ -38,33 +64,12 @@ object NameAnalysis extends Pipeline[Program, Program] {
       collectMethodDecl(n.main, scope.mainClass)
     }
 
+
     def collectClassDecl(klass: ClassDecl, scope: GlobalScope): Unit = {
       val className = klass.id.toString
-      val symbol = new ClassSymbol(className)
-      klass.setSymbol(symbol)
-      def addClass(): Unit = {
-        scope.classes + (className -> symbol)
-        klass.vars.foreach(v => collectVarDecl(v, symbol))
-        klass.methods.foreach(m => collectMethodDecl(m , symbol))
-      }
-      scope.lookupClass(className) match {
-        case Some(v) =>
-          fatal("collectClassDecl: " + className + " already declared", klass)
-        case None =>
-          klass.parent match {
-            case Some(v) => {
-              if (scope.lookupClass(v.value).isEmpty) {
-                fatal("collectClassDecl:" + className + " parent is not defined", klass)
-              }
-              symbol.parent = scope.lookupClass(v.value)
-              if (hasInheritanceCycle(symbol, scope)) {
-                fatal("collectClassDecl: " + className + " has an inheritanceCyckle", klass)
-              }
-              addClass()
-            }
-            case None => addClass()
-          }
-      }
+      val symbol = scope.lookupClass(className).get
+      klass.vars.foreach(v => collectVarDecl(v, symbol))
+      klass.methods.foreach(m => collectMethodDecl(m , symbol))
     }
 
     def hasInheritanceCycle(symbol: ClassSymbol, scope: GlobalScope): Boolean = {
@@ -104,7 +109,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
           s.members + (varName -> symbol)
 
         }
-        case s: _ => {
+        case _ => {
           sys.error("Collected a variable not in a Class or MethodSymbol!!")
         }
       }
@@ -149,7 +154,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
         //      case n: MethodDecl => collectMethodDecl(n, scope)
         //      case n: Formal => collectFormal(n, scope)
         //      case n: Identifier => collectIdentifier(n, scope)
-        case n: _ => sys.error("tried to attach something that needs a more specific scope")
+        case _ => sys.error("tried to attach something that needs a more specific scope")
       }
     }
 
@@ -226,7 +231,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
             case None => sys.error("attachVariable: No matching variable in method")
           }
         }
-        case s: _ => {
+        case _ => {
           sys.error("attachVariable: tried to attach with something that shouldn't have variables")
         }
       }
@@ -239,8 +244,17 @@ object NameAnalysis extends Pipeline[Program, Program] {
     // main
 
     // collect symbols
-    prog.classes.foreach(classDecl => collectSymbols(classDecl, globalScope))
-    collectSymbols(prog.main, globalScope)
+    // should collect all class symbols before symbolzing their methods.
+    // add all classes
+    prog.classes.foreach(classDecl => addClassSymbols(classDecl, globalScope))
+    // for each class, check
+    // if class has parent, make sure parent's symbol is there
+    prog.classes.foreach(classDecl => checkParent(classDecl, globalScope))
+    // then do the for real colleciton on everything else
+    prog.classes.foreach(classDecl => collectClassDecl(classDecl, globalScope))
+    // then
+    collectMainMethod(prog.main, globalScope)
+
 
     // Step 2: Attach symbols to identifiers (except method calls) in method bodies
     // DEPLOY SYMBOLS
@@ -249,6 +263,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
 
     // (Step 3:) Print tree with symbol ids for debugging
     if (ctx.doSymbolIds) {
+      println("doing symbolids 11!!!!")
       //print tree with symbol ids
       val out = Printer.applyWithSymbolIds(prog)
       println(out)

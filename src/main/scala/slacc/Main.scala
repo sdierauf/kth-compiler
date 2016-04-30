@@ -1,11 +1,12 @@
 package slacc
 
 import utils._
-import java.io.{PrintWriter, File}
-import scala.collection.JavaConversions._
+import java.io.{File, PrintWriter}
 
+import scala.collection.JavaConversions._
 import lexer._
 import ast._
+import slacc.analyzer.NameAnalysis
 
 import scala.io.Source
 
@@ -65,6 +66,10 @@ object Main {
 
       case "--testPrintAll" :: args =>
         ctx = ctx.copy(testPrintAll = true)
+        processOption(args)
+
+      case "--symid" :: args =>
+        ctx = ctx.copy(doSymbolIds = true)
         processOption(args)
 
       case f :: args =>
@@ -216,6 +221,9 @@ object Main {
         }
 
       })
+    } else if (ctx.doSymbolIds) {
+      val pipeline = Lexer andThen Parser andThen NameAnalysis
+      val ast = pipeline.run(ctx)(ctx.files.head)
     } else {
       ???
     }
