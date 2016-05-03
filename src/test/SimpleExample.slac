@@ -11,5 +11,6 @@ class A {
 method main(): Unit = {
   var varA : A;
   varA = new A();
-  println(varA.foo())
+  varA = varA + 1;
+  println(varA.foo());
 }

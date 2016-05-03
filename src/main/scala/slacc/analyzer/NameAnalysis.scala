@@ -191,7 +191,12 @@ object NameAnalysis extends Pipeline[Program, Program] {
             // need to look up that identifier has been declared
             symbol.lookupVar(i.value) match {
               case Some(s) => i.setSymbol(s)
-              case None => fatal("collectIdentifier: no matching symbol for identifier");
+              case None => {
+                globalScope.lookupClass(i.value) match {
+                  case Some(s) => i.setSymbol(s)
+                  case None => return; sys.error("collectExpressionDecl: No match for " + i.value)
+                }
+              }
             }
         }
         case m :MethodCall => {
@@ -210,6 +215,9 @@ object NameAnalysis extends Pipeline[Program, Program] {
           collectExpr(e.id, symbol)
           collectExpr(e.expr, symbol)
           collectExpr(e.index, symbol)
+        }
+        case n: New => {
+          collectExpr(n.tpe, symbol)
         }
         case _ => println("collectExpr fell through as: " + expr.toString)
       }
@@ -269,6 +277,8 @@ object NameAnalysis extends Pipeline[Program, Program] {
       }
       method.args.foreach(formal => attachFormal(formal, method.getSymbol))
       method.vars.foreach(v => attachVariable(v, method.getSymbol))
+      method.exprs.foreach(exp => collectExpr(exp, method.getSymbol))
+      collectExpr(method.retExpr, method.getSymbol)
       attachRetType(method.retType, method.getSymbol)
     }
 
@@ -299,7 +309,9 @@ object NameAnalysis extends Pipeline[Program, Program] {
     }
 
     def attachVariable(v: VarDecl, scope: Symbol): Unit = {
+
       val varName = v.id.value
+      attachTypeTree(v.tpe)
       scope match {
         case s: ClassSymbol => {
           val symbol = s.lookupVar(varName)
