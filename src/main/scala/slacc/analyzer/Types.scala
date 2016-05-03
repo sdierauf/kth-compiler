@@ -34,10 +34,49 @@ object Types {
     override def toString = "Int"
   }
 
-  // TODO: Complete by creating necessary types
+  case object TBoolean extends Type {
+    override def isSubTypeOf(tpe: Type): Boolean = tpe match {
+      case TBoolean => true
+      case _ => false
+    }
+    override def toString = "Boolean"
+  }
+
+  case object TString extends Type {
+    override def isSubTypeOf(tpe: Type): Boolean = tpe match {
+      case TString => true
+      case _ => false
+    }
+    override def toString = "String"
+  }
+
+  case object TUnit extends Type {
+    override def isSubTypeOf(tpe: Type): Boolean = tpe match {
+      case TUnit => true
+      case _ => false
+    }
+    override def toString = "Unit"
+  }
+
+  case object TIntArray extends Type {
+    override def isSubTypeOf(tpe: Type): Boolean = tpe match {
+      case TIntArray => true
+      case _ => false
+    }
+    override def toString = "IntArray"
+  }
 
   case class TObject(classSymbol: ClassSymbol) extends Type {
-    override def isSubTypeOf(tpe: Type): Boolean = ???
+    override def isSubTypeOf(tpe: Type): Boolean = tpe match {
+      case classSymbol.getType => true
+      case _ => {
+        val parent = classSymbol.parent.get
+        if (parent != None) { // check parent recursively
+          new TObject(parent).isSubTypeOf(tpe)
+        }
+        false
+      }
+    }
     override def toString = classSymbol.name
   }
 
