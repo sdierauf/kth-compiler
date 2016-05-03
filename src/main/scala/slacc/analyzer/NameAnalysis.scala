@@ -4,6 +4,7 @@ package analyzer
 import utils._
 import ast.Trees._
 import Symbols._
+import Types._
 import slacc.ast.Printer
 
 
@@ -126,7 +127,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
         scope.methods += (methodName -> symbol)
         method.args.foreach(arg => collectFormal(arg, symbol))
         method.vars.foreach(v => collectVarDecl(v, symbol))
-        method.exprs.foreach(expr => collectExpr(expr, symbol))
+        method.exprs.foreach(expr => attachExpr(expr, symbol))
       }
       // TODO: How the fuck do we know if it's overloaded or not?!?
       scope.lookupMethod(methodName) match {
@@ -137,56 +138,56 @@ object NameAnalysis extends Pipeline[Program, Program] {
       }
     }
 
-    def collectExpr(expr: ExprTree, symbol: MethodSymbol): Unit = {
+    def attachExpr(expr: ExprTree, symbol: MethodSymbol): Unit = {
 //      case class ArrayRead(arr: ExprTree, index: ExprTree) extends ExprTree
 //      case class ArrayLength(arr: ExprTree) extends ExprTree
       expr match {
         // case Trees(lhs : ExprTree, rhs : ExprTree) => idk if something like this would work
         case t : And => {
-          collectExpr(t.lhs, symbol)
-          collectExpr(t.rhs, symbol)
+          attachExpr(t.lhs, symbol)
+          attachExpr(t.rhs, symbol)
         } case t : Or => {
-          collectExpr(t.lhs, symbol)
-          collectExpr(t.rhs, symbol)
+          attachExpr(t.lhs, symbol)
+          attachExpr(t.rhs, symbol)
         } case t : Plus => {
-          collectExpr(t.lhs, symbol)
-          collectExpr(t.rhs, symbol)
+          attachExpr(t.lhs, symbol)
+          attachExpr(t.rhs, symbol)
         } case t : Minus => {
-          collectExpr(t.lhs, symbol)
-          collectExpr(t.rhs, symbol)
+          attachExpr(t.lhs, symbol)
+          attachExpr(t.rhs, symbol)
         } case t : Times => {
-          collectExpr(t.lhs, symbol)
-          collectExpr(t.rhs, symbol)
+          attachExpr(t.lhs, symbol)
+          attachExpr(t.rhs, symbol)
         } case t : Div => {
-          collectExpr(t.lhs, symbol)
-          collectExpr(t.rhs, symbol)
+          attachExpr(t.lhs, symbol)
+          attachExpr(t.rhs, symbol)
         } case t : LessThan => {
-          collectExpr(t.lhs, symbol)
-          collectExpr(t.rhs, symbol)
+          attachExpr(t.lhs, symbol)
+          attachExpr(t.rhs, symbol)
         } case t : Equals => {
-          collectExpr(t.lhs, symbol)
-          collectExpr(t.rhs, symbol)
+          attachExpr(t.lhs, symbol)
+          attachExpr(t.rhs, symbol)
         } case b : Block => {
-          b.exprs.foreach(e => collectExpr(e, symbol))
+          b.exprs.foreach(e => attachExpr(e, symbol))
         } case ifthen : If => {
-          collectExpr(ifthen.expr, symbol)
-          collectExpr(ifthen.thn, symbol)
+          attachExpr(ifthen.expr, symbol)
+          attachExpr(ifthen.thn, symbol)
           ifthen.els match {
-            case Some(e3) => collectExpr(e3, symbol)
+            case Some(e3) => attachExpr(e3, symbol)
           }
         } case w : While => {
-          collectExpr(w.body, symbol)
-          collectExpr(w.cond, symbol)
+          attachExpr(w.body, symbol)
+          attachExpr(w.cond, symbol)
         } case p : Println => {
-          collectExpr(p.expr, symbol)
+          attachExpr(p.expr, symbol)
         } case s : Strof => {
-          collectExpr(s.expr, symbol)
+          attachExpr(s.expr, symbol)
         }
         case a : Assign => {
             // need to check that the variable being assigned has been declared
            // or do we do that somewhere else
-          collectExpr(a.id, symbol)
-          collectExpr(a.expr, symbol)
+          attachExpr(a.id, symbol)
+          attachExpr(a.expr, symbol)
         } case i : Identifier => {
             // need to look up that identifier has been declared
             symbol.lookupVar(i.value) match {
@@ -200,26 +201,26 @@ object NameAnalysis extends Pipeline[Program, Program] {
             }
         }
         case m :MethodCall => {
-          collectExpr(m.obj, symbol)
-          collectExpr(m.meth, symbol)
-          m.args.foreach(ar => collectExpr(ar, symbol))
+          attachExpr(m.obj, symbol)
+          attachExpr(m.meth, symbol)
+          m.args.foreach(ar => attachExpr(ar, symbol))
         }
         case e: ArrayRead => {
-          collectExpr(e.arr, symbol)
-          collectExpr(e.index, symbol)
+          attachExpr(e.arr, symbol)
+          attachExpr(e.index, symbol)
         }
         case e: ArrayLength => {
-          collectExpr(e.arr, symbol)
+          attachExpr(e.arr, symbol)
         }
         case e: ArrayAssign => {
-          collectExpr(e.id, symbol)
-          collectExpr(e.expr, symbol)
-          collectExpr(e.index, symbol)
+          attachExpr(e.id, symbol)
+          attachExpr(e.expr, symbol)
+          attachExpr(e.index, symbol)
         }
         case n: New => {
-          collectExpr(n.tpe, symbol)
+          attachExpr(n.tpe, symbol)
         }
-        case _ => println("collectExpr fell through as: " + expr.toString)
+        case _ => println("attachExpr fell through as: " + expr.toString)
       }
 
       }
@@ -252,7 +253,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
 
     def attachMainMethod(main: MainMethod, scope: GlobalScope): Unit = {
       scope.lookupClass(main.id.value) match {
-        case Some(s) => main.setSymbol(s); main.id.setSymbol(s)
+        case Some(s) => main.setSymbol(s); main.id.setSymbol(s);
         case None => sys.error("attachMainMethod: No symbol for main class")
       }
       attachMethod(main.main, main.getSymbol)
@@ -284,8 +285,8 @@ object NameAnalysis extends Pipeline[Program, Program] {
       }
       method.args.foreach(formal => attachFormal(formal, method.getSymbol))
       method.vars.foreach(v => attachVariable(v, method.getSymbol))
-      method.exprs.foreach(exp => collectExpr(exp, method.getSymbol))
-      collectExpr(method.retExpr, method.getSymbol)
+      method.exprs.foreach(exp => attachExpr(exp, method.getSymbol))
+      attachExpr(method.retExpr, method.getSymbol)
       attachRetType(method.retType, method.getSymbol)
     }
 
