@@ -1,6 +1,6 @@
 package slacc.analyzer
 
-import slacc.analyzer.Types._
+import slacc.analyzer.Types.{_}
 import slacc.ast.Trees.{ExprTree, Program, _}
 import slacc.utils.{Context, Pipeline}
 
@@ -44,35 +44,74 @@ object TypeChecking extends Pipeline[Program, Program] {
       }
 
       def tcAnd(e: And): Type = {
-
+        tcExpr(e.lhs, TBoolean)
+        tcExpr(e.rhs, TBoolean)
+        TBoolean
       }
 
       def tcOr(e: Or): Type = {
-
+        tcExpr(e.lhs, TBoolean)
+        tcExpr(e.rhs, TBoolean)
+        TBoolean
       }
 
       def tcPlus(e: Plus): Type = {
-
+        val possibleTypes = TInt :: TString :: List()
+        val l = tcExpr(e.lhs, possibleTypes:_*)
+        val r = tcExpr(e.rhs, possibleTypes:_*)
+        l match {
+          case TInt => r match {
+            case TInt => TInt
+            case TString => TString
+            case _ => fatal("tcPlus: werent strings or ints")
+          }
+          case TString => r match {
+            case TInt => TString
+            case TString => TString
+            case _ => fatal("tcPlus: werent strings or ints")
+          }
+          case _ => fatal("tcPlus: werent strings or ints")
+        }
       }
 
       def tcMinus(e: Minus): Type = {
-
+        val l = tcExpr(e.lhs, TInt)
+        val r = tcExpr(e.rhs, TInt)
+        TInt
       }
 
       def tcTimes(e: Times): Type = {
-
+        val l = tcExpr(e.lhs, TInt)
+        val r = tcExpr(e.rhs, TInt)
+        TInt
       }
 
       def tcDiv(e: Div): Type = {
-
+        val l = tcExpr(e.lhs, TInt)
+        val r = tcExpr(e.rhs, TInt)
+        TInt
       }
 
       def tcLessThan(e: LessThan): Type = {
-
+        val l = tcExpr(e.lhs, TInt)
+        val r = tcExpr(e.rhs, TInt)
+        TInt
       }
 
       def tcEquals(e: Equals): Type = {
-
+        val primitives = TInt :: TString :: TBoolean :: TIntArray :: List()
+        val accepted: List[Type] = anyObject :: primitives
+        val l = tcExpr(e.lhs, accepted:_*)
+        l match {
+          case TObject(klass) => tcExpr(e.rhs, anyObject); TBoolean
+          case p if primitives.contains(l) => tcExpr(e.rhs, p); TBoolean
+          case _ => {
+            val r : Type = tcExpr(e.rhs)
+            fatal("Type error: Equality operator requires compatible types, but found types: "
+              + l + " and " + r)
+            TError
+          }
+        }
       }
 
       def tcArrayRead(e: ArrayRead): Type = {
