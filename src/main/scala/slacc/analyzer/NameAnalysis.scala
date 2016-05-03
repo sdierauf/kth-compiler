@@ -140,7 +140,6 @@ object NameAnalysis extends Pipeline[Program, Program] {
     def collectExpr(expr: ExprTree, symbol: MethodSymbol): Unit = {
 //      case class ArrayRead(arr: ExprTree, index: ExprTree) extends ExprTree
 //      case class ArrayLength(arr: ExprTree) extends ExprTree
-//      case class MethodCall(obj: ExprTree, meth: Identifier, args: List[ExprTree]) extends ExprTree
       expr match {
         // case Trees(lhs : ExprTree, rhs : ExprTree) => idk if something like this would work
         case t : And => {
@@ -182,14 +181,37 @@ object NameAnalysis extends Pipeline[Program, Program] {
           collectExpr(p.expr, symbol)
         } case s : Strof => {
           collectExpr(s.expr, symbol)
-        } case arr : ArrayAssign => {
-          // same deal as below
-        } case a : Assign => {
+        }
+        case a : Assign => {
             // need to check that the variable being assigned has been declared
            // or do we do that somewhere else
+          collectExpr(a.id, symbol)
+          collectExpr(a.expr, symbol)
         } case i : Identifier => {
             // need to look up that identifier has been declared
+            symbol.lookupVar(i.value) match {
+              case Some(s) => i.setSymbol(s)
+              case None => fatal("collectIdentifier: no matching symbol for identifier");
+            }
         }
+        case m :MethodCall => {
+          collectExpr(m.obj, symbol)
+          collectExpr(m.meth, symbol)
+          m.args.foreach(ar => collectExpr(ar, symbol))
+        }
+        case e: ArrayRead => {
+          collectExpr(e.arr, symbol)
+          collectExpr(e.index, symbol)
+        }
+        case e: ArrayLength => {
+          collectExpr(e.arr, symbol)
+        }
+        case e: ArrayAssign => {
+          collectExpr(e.id, symbol)
+          collectExpr(e.expr, symbol)
+          collectExpr(e.index, symbol)
+        }
+        case _ => println("collectExpr fell through as: " + expr.toString)
       }
 
       }
