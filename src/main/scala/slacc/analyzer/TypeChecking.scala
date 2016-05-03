@@ -76,79 +76,92 @@ object TypeChecking extends Pipeline[Program, Program] {
       }
 
       def tcArrayRead(e: ArrayRead): Type = {
-
+        tcExpr(e.arr, TIntArray)
+        tcExpr(e.index, TInt)
       }
 
       def tcArrayLength(e: ArrayLength): Type = {
-
+        ???
       }
 
       def tcMethodCall(e: MethodCall): Type = {
-
+        ???
       }
 
-      def tcIntLit(e: IntLit): Type = {
+      def tcIntLit(e: IntLit): Type = TInt
 
-      }
+      def tcStringLit(e: StringLit): Type = TString
 
-      def tcStringLit(e: StringLit): Type = {
+      def tcTrue(e: True): Type = TBoolean
 
-      }
-
-      def tcTrue(e: True): Type = {
-
-      }
-
-      def tcFalse(e: False): Type = {
-
-      }
+      def tcFalse(e: False): Type = TBoolean
 
       def tcIdentifier(e: Identifier): Type = {
-
+        ???
       }
 
       def tcSelf(e: Self): Type = {
-
+        ??? // ya idk
       }
 
       def tcNewIntArray(e: NewIntArray): Type = {
-
+        tcExpr(e.size, TInt)
       }
 
       def tcNew(e: New): Type = {
-
+        tcExpr(e.tpe)
       }
 
       def tcNot(e: Not): Type = {
-
+        tcExpr(e.expr, TBoolean)
       }
 
       def tcBlock(e: Block): Type = {
-
+        e.exprs.foreach(ex => tcExpr(ex))
+        TUnit // is this the type of a block
       }
 
       def tcIf(e: If): Type = {
-
+        tcExpr(e.expr, TBoolean)
+        val thnBranch = tcExpr(e.thn)
+        e.els match {
+          case Some(els) => {
+            val elsBranch = tcExpr(els)
+            if (thnBranch == elsBranch) thnBranch
+            else TError
+          } case None => thnBranch
+        }
       }
 
       def tcWhile(e: While): Type = {
-
+        tcExpr(e.cond, TBoolean)
+        tcExpr(e.body, TUnit)
+        TUnit
       }
 
       def tcPrintln(e: Println): Type = {
-
+        tcExpr(e.expr, TString)
+        TUnit
       }
 
       def tcAssign(e: Assign): Type = {
-
+        val lhs = tcExpr(e.id)
+        val rhs = tcExpr(e.expr)
+        if (lhs == rhs) TUnit // ya
+        else if (rhs.isSubTypeOf(lhs)) TUnit // this is ok
+        else TError
       }
 
       def tcArrayAssign(e: ArrayAssign): Type = {
-
+         tcExpr(e.id, TIntArray)
+         tcExpr(e.index, TInt)
+         tcExpr(e.expr, TInt)
+         TUnit
       }
 
       def tcStrof(e: Strof): Type = {
-
+         tcExpr(e.expr, TInt, TBoolean)
+         TString
       }
 
       // Check result and return a valid type in case of error
