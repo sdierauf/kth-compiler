@@ -218,6 +218,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
           attachExpr(e.index, symbol)
         }
         case n: New => {
+          attachTypeTree(n.tpe)
           attachExpr(n.tpe, symbol)
         }
         case _ => println("attachExpr fell through as: " + expr.toString)
@@ -299,10 +300,15 @@ object NameAnalysis extends Pipeline[Program, Program] {
         case tpe: Identifier => {
           // look up in list of classes
           globalScope.lookupClass(tpe.value) match {
-            case Some(z) => tpe.setSymbol(z);
+            case Some(z) => tpe.setSymbol(z); tpe.setType(TObject(z));
             case None => sys.error("attachTypeTree: No matching class for identifier")
           }
         }
+        case tpe: IntArrayType => tpe.setType(Types.TIntArray)
+        case tpe: IntType => tpe.setType(TInt)
+        case tpe: BooleanType => tpe.setType(TBoolean)
+        case tpe: StringType => tpe.setType(TString)
+        case tpe: UnitType => tpe.setType(TUnit)
         case _ => // do nothing
       }
     }
