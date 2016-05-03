@@ -264,7 +264,13 @@ object NameAnalysis extends Pipeline[Program, Program] {
         case Some(klass) => classDecl.setSymbol(klass); classDecl.id.setSymbol(klass)
         case None => sys.error("attachClassDecl: No matching class for ID")
       }
-
+      if (classDecl.parent.isDefined) {
+        val p = classDecl.parent.get
+        scope.lookupClass(p.value) match {
+          case Some(s) => p.setSymbol(s)
+          case None => println("attachClassDecl: parent" + p.value + " had no symbol!!")
+        }
+      }
       classDecl.methods.foreach(method => attachMethod(method, classDecl.getSymbol))
       classDecl.vars.foreach(v => attachVariable(v, classDecl.getSymbol))
     }
