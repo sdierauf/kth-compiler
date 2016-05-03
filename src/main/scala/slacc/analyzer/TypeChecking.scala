@@ -1,6 +1,6 @@
 package slacc.analyzer
 
-import slacc.analyzer.Types._
+import slacc.analyzer.Types.{_}
 import slacc.ast.Trees.{ExprTree, Program, _}
 import slacc.utils.{Context, Pipeline}
 
@@ -44,7 +44,7 @@ object TypeChecking extends Pipeline[Program, Program] {
       }
 
       def tcAnd(e: And): Type = {
-
+//        tcExpr(e.lhs, T
       }
 
       def tcOr(e: Or): Type = {
