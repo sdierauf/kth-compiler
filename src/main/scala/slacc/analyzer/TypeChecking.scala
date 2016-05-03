@@ -1,5 +1,6 @@
 package slacc.analyzer
 
+import slacc.analyzer.Symbols.MethodSymbol
 import slacc.analyzer.Types.{_}
 import slacc.ast.Trees.{ExprTree, Program, _}
 import slacc.utils.{Context, Pipeline}
@@ -120,11 +121,23 @@ object TypeChecking extends Pipeline[Program, Program] {
       }
 
       def tcArrayLength(e: ArrayLength): Type = {
-        ???
+        tcExpr(e.arr, TIntArray)
+        TInt
       }
 
       def tcMethodCall(e: MethodCall): Type = {
-        ???
+        tcExpr(e.obj, anyObject)
+        val params = e.meth.getSymbol
+        var argListTypes = List[Type]()
+        params match {
+          case p: MethodSymbol => {
+            p.argList.foreach(a => argListTypes:+a.getType)
+          }
+          case _ => TError // should never happen
+        }
+        if (e.args.length != argListTypes.length) TError // is this okay
+        for ((arg, t) <- (e.args zip argListTypes)) yield tcExpr(arg, t)
+        tcExpr(e.meth, e.meth.getType)
       }
 
       def tcIntLit(e: IntLit): Type = TInt
@@ -136,11 +149,11 @@ object TypeChecking extends Pipeline[Program, Program] {
       def tcFalse(e: False): Type = TBoolean
 
       def tcIdentifier(e: Identifier): Type = {
-        ???
+        e.getType
       }
 
       def tcSelf(e: Self): Type = {
-        ??? // ya idk
+        e.getSymbol.getType
       }
 
       def tcNewIntArray(e: NewIntArray): Type = {
