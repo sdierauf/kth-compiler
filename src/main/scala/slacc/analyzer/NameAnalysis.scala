@@ -138,10 +138,62 @@ object NameAnalysis extends Pipeline[Program, Program] {
     }
 
     def collectExpr(expr: ExprTree, symbol: MethodSymbol): Unit = {
+//      case class ArrayRead(arr: ExprTree, index: ExprTree) extends ExprTree
+//      case class ArrayLength(arr: ExprTree) extends ExprTree
+//      case class MethodCall(obj: ExprTree, meth: Identifier, args: List[ExprTree]) extends ExprTree
       expr match {
+        // case Trees(lhs : ExprTree, rhs : ExprTree) => idk if something like this would work
+        case t : And => {
+          collectExpr(t.lhs, symbol)
+          collectExpr(t.rhs, symbol)
+        } case t : Or => {
+          collectExpr(t.lhs, symbol)
+          collectExpr(t.rhs, symbol)
+        } case t : Plus => {
+          collectExpr(t.lhs, symbol)
+          collectExpr(t.rhs, symbol)
+        } case t : Minus => {
+          collectExpr(t.lhs, symbol)
+          collectExpr(t.rhs, symbol)
+        } case t : Times => {
+          collectExpr(t.lhs, symbol)
+          collectExpr(t.rhs, symbol)
+        } case t : Div => {
+          collectExpr(t.lhs, symbol)
+          collectExpr(t.rhs, symbol)
+        } case t : LessThan => {
+          collectExpr(t.lhs, symbol)
+          collectExpr(t.rhs, symbol)
+        } case t : Equals => {
+          collectExpr(t.lhs, symbol)
+          collectExpr(t.rhs, symbol)
+        } case b : Block => {
+          b.exprs.foreach(e => collectExpr(e, symbol))
+        } case ifthen : If => {
+          collectExpr(ifthen.expr, symbol)
+          collectExpr(ifthen.thn, symbol)
+          ifthen.els match {
+            case Some(e3) => collectExpr(e3, symbol)
+          }
+        } case w : While => {
+          collectExpr(w.body, symbol)
+          collectExpr(w.cond, symbol)
+        } case p : Println => {
+          collectExpr(p.expr, symbol)
+        } case s : Strof => {
+          collectExpr(s.expr, symbol)
+        } case arr : ArrayAssign => {
+          // same deal as below
+        } case a : Assign => {
+            // need to check that the variable being assigned has been declared
+           // or do we do that somewhere else
+        } case i : Identifier => {
+            // need to look up that identifier has been declared
+        }
+      }
 
       }
-    }
+
 
     def collectFormal(n: Formal, scope: MethodSymbol): Unit = {
       // it's ok if it has the same name as a class variable...
