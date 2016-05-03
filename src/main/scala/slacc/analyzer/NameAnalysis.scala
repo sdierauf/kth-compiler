@@ -324,14 +324,14 @@ object NameAnalysis extends Pipeline[Program, Program] {
         case s: ClassSymbol => {
           val symbol = s.lookupVar(varName)
           symbol match {
-            case Some(z) => v.setSymbol(z); v.id.setSymbol(z)
+            case Some(z) => v.setSymbol(z); v.id.setSymbol(z);
             case None => sys.error("attachVariable: No matching variable:" + varName + " in  class: " + s.name )
           }
         }
         case s: MethodSymbol => {
           val symbol = s.lookupVar(varName)
           symbol match {
-            case Some(z) => v.setSymbol(z); v.id.setSymbol(z)
+            case Some(z) => v.setSymbol(z); v.id.setSymbol(z);
             case None => sys.error("attachVariable: No matching variable: " + varName + " in method: " + s.name)
           }
         }
