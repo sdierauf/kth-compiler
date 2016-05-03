@@ -16,7 +16,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
     // Step 1: Collect symbols in declarations
     var globalScope = new GlobalScope()
 
-    def addClassSymbols(klass: ClassDecl, scope: GlobalScope): Unit = {
+    def addClassSymbol(klass: ClassDecl, scope: GlobalScope): Unit = {
       val className = klass.id.value
       val symbol = new ClassSymbol(className)
       scope.lookupClass(className) match {
@@ -264,6 +264,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
         case Some(klass) => classDecl.setSymbol(klass); classDecl.id.setSymbol(klass)
         case None => sys.error("attachClassDecl: No matching class for ID")
       }
+
       classDecl.methods.foreach(method => attachMethod(method, classDecl.getSymbol))
       classDecl.vars.foreach(v => attachVariable(v, classDecl.getSymbol))
     }
@@ -342,7 +343,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
     // collect symbols
     // should collect all class symbols before symbolzing their methods.
     // add all classes
-    prog.classes.foreach(classDecl => addClassSymbols(classDecl, globalScope))
+    prog.classes.foreach(classDecl => addClassSymbol(classDecl, globalScope))
     // for each class, check
     // if class has parent, make sure parent's symbol is there
     prog.classes.foreach(classDecl => checkParent(classDecl, globalScope))

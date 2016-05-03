@@ -50,10 +50,18 @@ object Symbols {
     var members = Map[String, VariableSymbol]()
 
     def lookupMethod(n: String): Option[MethodSymbol] = {
-      methods.get(n)
+      var ret = methods.get(n)
+      if (ret.isEmpty && parent.isDefined) {
+        ret = parent.get.lookupMethod(n)
+      }
+      ret
     }
     def lookupVar(n: String): Option[VariableSymbol] = {
-      members.get(n)
+      var ret = members.get(n)
+      if (ret.isEmpty && parent.isDefined) {
+        ret = parent.get.lookupVar(n)
+      }
+      ret
     }
   }
 
