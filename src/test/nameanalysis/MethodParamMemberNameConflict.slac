@@ -1,0 +1,12 @@
+class A {
+  var value: Int;
+  method foo(value : Bool): Int = {
+    var value : Bool;
+    value = false;
+    41
+  }
+}
+
+method main(): Unit = {
+  println(new A().foo())
+}

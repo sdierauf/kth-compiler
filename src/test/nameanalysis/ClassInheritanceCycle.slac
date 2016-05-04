@@ -1,0 +1,19 @@
+// The following three classes form a cycle
+class Shape <: Square {
+
+}
+
+class Rectangle <: Shape {
+
+}
+
+class Square <: Rectangle {
+
+}
+
+class Circle <: Shape {
+}
+
+method main() : Unit = {
+  println("There's a cycle in this slac program!")
+}

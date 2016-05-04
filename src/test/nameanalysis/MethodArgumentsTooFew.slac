@@ -1,0 +1,10 @@
+class B {
+  method foo(firParam : Int, secParam : Int): Int = {
+    firParam = firParam + secParam;
+    firParam
+  }
+}
+
+method main(): Unit = {
+  println(new B().foo(43))
+}

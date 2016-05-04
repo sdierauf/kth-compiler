@@ -1,0 +1,19 @@
+class B <: A {
+  method foo(param : Int): Int = {
+    value = 42;
+    param
+  }
+}
+
+class A {
+  var value: Int;
+  method foo(param : Int): Int = {
+    var value: Bool;
+    value = false;
+    41
+  }
+}
+
+method main(): Unit = {
+  println(new B().foo(43))
+}

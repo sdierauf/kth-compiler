@@ -1,0 +1,20 @@
+class B <: A {
+  method foo(): Int = {
+    value = 42;
+    value
+  }
+}
+
+class A {
+  var value: Int;
+  var unused : Int;
+  method foo(): Int = {
+    var value: Bool;
+    value = false;
+    41
+  }
+}
+
+method main(): Unit = {
+  println(new B().foo())
+}

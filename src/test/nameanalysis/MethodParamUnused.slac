@@ -1,0 +1,11 @@
+class B {
+  var value : Int;
+  method foo(unused : Int): Int = {
+    value = 42;
+    value
+  }
+}
+
+method main(): Unit = {
+  println(new B().foo(41))
+}
