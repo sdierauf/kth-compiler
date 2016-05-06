@@ -16,12 +16,23 @@ object NameAnalysis extends Pipeline[Program, Program] {
 
     // Step 1: Collect symbols in declarations
     var globalScope = new GlobalScope()
+    var unusedMethodArgs: Set[String] = Set()
+    var unusedClassVars: Set[String] = Set()
+    var unusedMethodVars: Set[String] = Set()
+
+    def useVariable(variable: String): Unit ={
+      println("useVariable: using " + variable)
+      unusedMethodArgs = unusedMethodArgs - variable
+      unusedClassVars = unusedClassVars - variable
+      unusedMethodVars = unusedMethodVars - variable
+    }
+
 
     def addClassSymbol(klass: ClassDecl, scope: GlobalScope): Unit = {
       val className = klass.id.value
-      val symbol = new ClassSymbol(className)
+      val symbol = new ClassSymbol(className).setPos(klass)
       scope.lookupClass(className) match {
-        case Some(v) => error("collectClassDecl2: already a class with that name defined in the scope");
+        case Some(v) => error("collectClassDecl2: already a class with that name defined in the scope", v);
         case None => scope.classes += (className -> symbol)
       }
     }
@@ -33,12 +44,12 @@ object NameAnalysis extends Pipeline[Program, Program] {
         case Some(p) => {
           val parent = scope.lookupClass(p.value)
           if (parent.isEmpty) {
-            error("checkParent: no matching symbol for class " + klass.id.value + " parent!!")
+            error("checkParent: no matching symbol for parent of class " + klass.id.value, symbol)
           }
           symbol.parent = parent
           // check for inheritance cycle
           if (hasInheritanceCycle(symbol, scope)) {
-            error("checkParent: symbol " + klass.id.value + " was part of an inheritance cycle!!")
+            error("checkParent: symbol " + klass.id.value + " was part of an inheritance cycle!!", symbol)
           }
         }
         case None =>
@@ -50,7 +61,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
       if (scope.mainClass != null) {
         error("collectMainMethod: Main class already declared", n)
       }
-      scope.mainClass = new ClassSymbol(n.id.value)
+      scope.mainClass = new ClassSymbol(n.id.value).setPos(n)
       scope.classes += (n.id.value -> scope.mainClass)
       collectMethodDecl(n.main, scope.mainClass)
     }
@@ -84,7 +95,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
 
     def collectVarDecl(n: VarDecl, scope: Symbol): Unit = {
       val varName = n.id.value
-      val symbol = new VariableSymbol(varName)
+      val symbol = new VariableSymbol(varName).setPos(n)
       scope match {
         case s: ClassSymbol => {
           if (s.lookupVar(varName).isDefined) {
@@ -109,7 +120,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
 
     def collectMethodDecl(method: MethodDecl, scope: ClassSymbol): Unit = {
       val methodName = method.id.value
-      val symbol = new MethodSymbol(methodName, scope)
+      val symbol = new MethodSymbol(methodName, scope).setPos(method)
       def addMethod(): Unit = {
         scope.methods += (methodName -> symbol)
         method.args.foreach(arg => collectFormal(arg, symbol))
@@ -178,10 +189,10 @@ object NameAnalysis extends Pipeline[Program, Program] {
         } case i : Identifier => {
             // need to look up that identifier has been declared
             symbol.lookupVar(i.value) match {
-              case Some(s) => i.setSymbol(s)
+              case Some(s) => i.setSymbol(s); useVariable(i.value);
               case None => {
                 globalScope.lookupClass(i.value) match {
-                  case Some(s) => i.setSymbol(s)
+                  case Some(s) => i.setSymbol(s); useVariable(i.value);
                   case None => return; sys.error("collectExpressionDecl: No match for " + i.value)
                 }
               }
@@ -208,7 +219,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
           attachTypeTree(n.tpe)
           attachExpr(n.tpe, symbol)
         }
-        case _ => println("attachExpr fell through as: " + expr.toString)
+        case _ =>
       }
 
     }
@@ -217,7 +228,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
     def collectFormal(n: Formal, scope: MethodSymbol): Unit = {
       // it's ok if it has the same name as a class variable...
       val formalName = n.id.value
-      val symbol = new VariableSymbol(formalName)
+      val symbol = new VariableSymbol(formalName).setPos(n)
       if (scope.lookupVar(formalName).isDefined) {
         error("collectFormal: argList already had a formal with this name!", n)
       } else {
@@ -237,14 +248,14 @@ object NameAnalysis extends Pipeline[Program, Program] {
         //      case n: MethodDecl => collectMethodDecl(n, scope)
         //      case n: Formal => collectFormal(n, scope)
         //      case n: Identifier => collectIdentifier(n, scope)
-        case _ => error("tried to attach " + node + " that needs a more specific scope")
+        case _ => error("tried to attach " + node + " that needs a more specific scope", node)
       }
     }
 
     def attachMainMethod(main: MainMethod, scope: GlobalScope): Unit = {
       scope.lookupClass(main.id.value) match {
         case Some(s) => main.setSymbol(s); main.id.setSymbol(s);
-        case None => error("attachMainMethod: No symbol for main class")
+        case None => error("attachMainMethod: No symbol for main class", main)
       }
       attachMethod(main.main, main.getSymbol)
     }
@@ -253,17 +264,22 @@ object NameAnalysis extends Pipeline[Program, Program] {
       val className = classDecl.id.value
       scope.lookupClass(className) match {
         case Some(klass) => classDecl.setSymbol(klass); classDecl.id.setSymbol(klass)
-        case None => error("attachClassDecl: No matching class for ID")
+        case None => error("attachClassDecl: No matching class for ID " + className, classDecl)
       }
       if (classDecl.parent.isDefined) {
         val p = classDecl.parent.get
         scope.lookupClass(p.value) match {
           case Some(s) => p.setSymbol(s)
-          case None => error("attachClassDecl: parent" + p.value + " had no symbol!!")
+          case None => error("attachClassDecl: parent" + p.value + " had no symbol!!", classDecl)
         }
       }
+      unusedClassVars = unusedClassVars ++ classDecl.vars.map(v => v.id.value)
       classDecl.methods.foreach(method => attachMethod(method, classDecl.getSymbol))
       classDecl.vars.foreach(v => attachVariable(v, classDecl.getSymbol))
+      if (unusedClassVars.nonEmpty) {
+        warning("Class " + className + " has unused class variables: " + unusedClassVars.toList.mkString(", "), classDecl)
+      }
+      unusedClassVars = Set()
     }
 
     def attachMethod(method: MethodDecl, scope: ClassSymbol): Unit = {
@@ -271,14 +287,23 @@ object NameAnalysis extends Pipeline[Program, Program] {
       val symbol = scope.lookupMethod(methodName)
       symbol match {
         case Some(z) => method.setSymbol(z); method.id.setSymbol(z)
-        case None => error("attachVariable: No matching variable in class")
+        case None => error("attachVariable: No matching method " + methodName + " in class scope " + scope.name, method)
       }
-      var notLookedUp = method.vars.map(v => v.id.value)
+      unusedMethodArgs = unusedMethodArgs ++ method.args.map(a => a.id.value)
+      unusedMethodVars = unusedMethodVars ++ method.vars.map(v => v.id.value)
       method.args.foreach(formal => attachFormal(formal, method.getSymbol))
       method.vars.foreach(v => attachVariable(v, method.getSymbol))
       method.exprs.foreach(exp => attachExpr(exp, method.getSymbol))
       attachExpr(method.retExpr, method.getSymbol)
       attachRetType(method.retType, method.getSymbol)
+      if (unusedMethodArgs.nonEmpty) {
+        warning(scope.name + "." + methodName + " has unused args: " + unusedMethodArgs.toList.mkString(", "), method)
+      }
+      if (unusedMethodVars.nonEmpty) {
+        warning(scope.name + "." + methodName + " has unused vars " + unusedMethodVars.toList.mkString(", "), method)
+      }
+      unusedMethodArgs = Set()
+      unusedMethodVars = Set()
     }
 
     def attachRetType(tpe: TypeTree, method: MethodSymbol): Unit = {
@@ -291,7 +316,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
           // look up in list of classes
           globalScope.lookupClass(tpe.value) match {
             case Some(z) => tpe.setSymbol(z); tpe.setType(TObject(z));
-            case None => error("attachTypeTree: No matching class for identifier " + tpe.value)
+            case None => error("attachTypeTree: No matching class for identifier " + tpe.value, tpe)
           }
         }
         case tpe: IntArrayType => tpe.setType(Types.TIntArray)
@@ -308,7 +333,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
       attachTypeTree(formal.tpe)
       method.lookupVar(formal.id.value) match {
         case Some(s) => formal.id.setSymbol(s);
-        case None => error("attachFormal: no matching symbol for id: " + formal.id.value)
+        case None => error("attachFormal: no matching symbol for id: " + formal.id.value, formal)
       }
     }
 
@@ -321,18 +346,18 @@ object NameAnalysis extends Pipeline[Program, Program] {
           val symbol = s.lookupVar(varName)
           symbol match {
             case Some(z) => v.setSymbol(z); v.id.setSymbol(z);
-            case None => error("attachVariable: No matching variable:" + varName + " in  class: " + s.name )
+            case None => error("attachVariable: No matching variable:" + varName + " in  class: " + s.name, v)
           }
         }
         case s: MethodSymbol => {
           val symbol = s.lookupVar(varName)
           symbol match {
             case Some(z) => v.setSymbol(z); v.id.setSymbol(z);
-            case None => error("attachVariable: No matching variable: " + varName + " in method: " + s.name)
+            case None => error("attachVariable: No matching variable: " + varName + " in method: " + s.name, v)
           }
         }
         case _ => {
-          error("attachVariable: tried to attach with something that shouldn't have variables")
+          error("attachVariable: tried to attach with something that shouldn't have variables", v)
         }
       }
     }
