@@ -40,7 +40,7 @@ object Symbols {
     var classes = Map[String, ClassSymbol]()
 
     def lookupClass(n: String): Option[ClassSymbol] = {
-      println(classes)
+//      println(classes)
       classes.get(n)
     }
   }

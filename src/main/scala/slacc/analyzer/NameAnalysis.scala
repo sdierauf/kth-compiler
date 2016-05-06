@@ -23,12 +23,10 @@ object NameAnalysis extends Pipeline[Program, Program] {
       scope.lookupClass(className) match {
         case Some(v) => fatal("collectClassDecl2: already a class with that name defined in the scope");
         case None => scope.classes += (className -> symbol)
-          println("addClassSymbols: added " + klass.id.value)
       }
     }
 
     def checkParent(klass: ClassDecl, scope: GlobalScope): Unit = {
-      println("checkParent: looking up " + klass.id.value)
       val symbolOption: Option[ClassSymbol] = scope.lookupClass(klass.id.value)
       val symbol = symbolOption.get
       klass.parent match {
@@ -39,8 +37,8 @@ object NameAnalysis extends Pipeline[Program, Program] {
           }
           symbol.parent = parent
           // check for inheritance cycle
-          if (hasInheritanceCycle(parent.get, scope)) {
-            fatal("checkParent: parent of " + klass.id.value + "was part of an inheritance cycle!!")
+          if (hasInheritanceCycle(symbol, scope)) {
+            fatal("checkParent: symbol " + klass.id.value + " was part of an inheritance cycle!!")
           }
         }
         case None =>
@@ -78,18 +76,19 @@ object NameAnalysis extends Pipeline[Program, Program] {
     }
 
     def hasInheritanceCycle(symbol: ClassSymbol, scope: GlobalScope): Boolean = {
-      var visited: Set[ClassSymbol] = Set()
-      visited = visited + symbol
+      var visited: Set[Int] = Set()
+      visited = visited + symbol.id
       var currentClass = symbol.parent
       while (currentClass.isDefined) {
         currentClass match {
           case Some(k) => {
-            if (visited.contains(k)) {
-              return false
+            if (visited.contains(k.id)) {
+              return true
+            } else {
+              visited = visited + k.id
+              currentClass = k.parent
             }
-            currentClass = k.parent
           }
-          case None => true
         }
       }
       false

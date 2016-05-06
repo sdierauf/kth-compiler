@@ -43,7 +43,7 @@ object TypeChecking extends Pipeline[Program, Program] {
         case e: Strof => tcStrof(e)
         case _ => fatal ("tcExpr: what happened")
       }
-      
+
       // Check result and return a valid type in case of error
       if (expected.isEmpty) {
         tpe
