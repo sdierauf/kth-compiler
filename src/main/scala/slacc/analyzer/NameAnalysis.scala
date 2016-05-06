@@ -303,7 +303,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
           // look up in list of classes
           globalScope.lookupClass(tpe.value) match {
             case Some(z) => tpe.setSymbol(z); tpe.setType(TObject(z));
-            case None => sys.error("attachTypeTree: No matching class for identifier")
+            case None => sys.error("attachTypeTree: No matching class for identifier " + tpe.value)
           }
         }
         case tpe: IntArrayType => tpe.setType(Types.TIntArray)
