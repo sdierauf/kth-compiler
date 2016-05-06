@@ -72,10 +72,10 @@ object Types {
       tpe match {
         case thisType => true
         case _ => {
-          val parent = classSymbol.parent.get
-          if (parent != None) {
+          val parent = classSymbol.parent
+          if (parent.isDefined) {
             // check parent recursively
-            new TObject(parent).isSubTypeOf(tpe)
+            new TObject(parent.get).isSubTypeOf(tpe)
           }
           false
         }
