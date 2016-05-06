@@ -137,7 +137,12 @@ object TypeChecking extends Pipeline[Program, Program] {
     }
 
     def tcMethodCall(e: MethodCall): Type = {
-      tcExpr(e.obj, anyObject)
+      val calledObj = tcExpr(e.obj, anyObject)
+      calledObj match {
+        case TObject(cs) => e.meth.setSymbol(cs)
+        case _ => TError
+      }
+
       val params = e.meth.getSymbol
       var argListTypes = List[Type]()
       params match {
