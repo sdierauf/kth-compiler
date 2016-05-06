@@ -44,6 +44,7 @@ object TypeChecking extends Pipeline[Program, Program] {
         case _ => fatal ("tcExpr: what happened")
       }
 
+
       // Check result and return a valid type in case of error
       if (expected.isEmpty) {
         tpe
@@ -226,6 +227,10 @@ object TypeChecking extends Pipeline[Program, Program] {
       tcExpr(e.expr, TInt, TBoolean)
       TString
     }
+
+    prog.classes.foreach(klass =>
+      klass.methods.foreach(m => m.exprs.foreach(ex => tcExpr(ex))))
+    prog.main.main.exprs.foreach(ex => tcExpr(ex))
 
     prog
   }
