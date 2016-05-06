@@ -6,7 +6,7 @@ import java.io.{File, PrintWriter}
 import scala.collection.JavaConversions._
 import lexer._
 import ast._
-import slacc.analyzer.NameAnalysis
+import slacc.analyzer.{NameAnalysis, TypeChecking}
 
 import scala.io.Source
 
@@ -222,7 +222,7 @@ object Main {
 
       })
     } else if (ctx.doSymbolIds) {
-      val pipeline = Lexer andThen Parser andThen NameAnalysis
+      val pipeline = Lexer andThen Parser andThen NameAnalysis andThen TypeChecking
       val ast = pipeline.run(ctx)(ctx.files.head)
     } else {
       ???

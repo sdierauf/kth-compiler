@@ -1,7 +1,8 @@
 package slacc.analyzer
 
 import slacc.analyzer.Symbols.MethodSymbol
-import slacc.analyzer.Types.{_}
+import slacc.analyzer.Types._
+import slacc.ast.Printer
 import slacc.ast.Trees.{ExprTree, Program, _}
 import slacc.utils.{Context, Pipeline}
 
@@ -13,6 +14,7 @@ object TypeChecking extends Pipeline[Program, Program] {
     import ctx.reporter._
 
     def tcExpr(expr: ExprTree, expected: Type*): Type = {
+      println("type checkingingn11")
       val tpe = expr match {
         case e: And => tcAnd(e)
         case e: Or => tcOr(e)
@@ -140,8 +142,8 @@ object TypeChecking extends Pipeline[Program, Program] {
     def tcMethodCall(e: MethodCall): Type = {
       val calledObj = tcExpr(e.obj, anyObject)
       calledObj match {
-        case TObject(cs) => e.meth.setSymbol(cs)
-        case _ => TError
+        case TObject(cs) => e.meth.setSymbol(cs.lookupMethod(e.meth.value).get)
+        case _ => TError;
       }
 
       val params = e.meth.getSymbol
@@ -154,7 +156,7 @@ object TypeChecking extends Pipeline[Program, Program] {
       }
       if (e.args.length != argListTypes.length) TError // is this okay
       for ((arg, t) <- (e.args zip argListTypes)) yield tcExpr(arg, t)
-      tcExpr(e.meth, e.meth.getType)
+      anyObject
     }
 
     def tcIntLit(e: IntLit): Type = TInt
@@ -236,6 +238,14 @@ object TypeChecking extends Pipeline[Program, Program] {
     prog.classes.foreach(klass =>
       klass.methods.foreach(m => m.exprs.foreach(ex => tcExpr(ex))))
     prog.main.main.exprs.foreach(ex => tcExpr(ex))
+    tcExpr(prog.main.main.retExpr)
+
+    if (ctx.doSymbolIds) {
+      println("doing symbolids 11!!!!")
+      //print tree with symbol ids
+      val out = Printer.applyWithSymbolIds(prog)
+      println(out)
+    }
 
     prog
   }

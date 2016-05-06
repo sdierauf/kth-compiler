@@ -364,12 +364,12 @@ object NameAnalysis extends Pipeline[Program, Program] {
     prog.classes.foreach(classDecl => println("class " + classDecl.id.value + "#" + classDecl.getSymbol.id))
 
     // (Step 3:) Print tree with symbol ids for debugging
-    if (ctx.doSymbolIds) {
-      println("doing symbolids 11!!!!")
-      //print tree with symbol ids
-      val out = Printer.applyWithSymbolIds(prog)
-      println(out)
-    }
+//    if (ctx.doSymbolIds) {
+//      println("doing symbolids 11!!!!")
+//      //print tree with symbol ids
+//      val out = Printer.applyWithSymbolIds(prog)
+//      println(out)
+//    }
     // Make sure you check all constraints
 
     prog
