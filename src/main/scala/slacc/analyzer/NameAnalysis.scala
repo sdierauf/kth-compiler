@@ -173,6 +173,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
           attachExpr(ifthen.thn, symbol)
           ifthen.els match {
             case Some(e3) => attachExpr(e3, symbol)
+            case None =>
           }
         } case w : While => {
           attachExpr(w.body, symbol)
@@ -230,10 +231,12 @@ object NameAnalysis extends Pipeline[Program, Program] {
       // it's ok if it has the same name as a class variable...
       val formalName = n.id.value
       val symbol = new VariableSymbol(formalName)
-      if (scope.argList.contains(symbol)) {
+      if (scope.lookupVar(formalName).isDefined) {
         fatal("collectFormal: argList already had a formal with this name!", n)
+      } else {
+        scope.params += (formalName -> symbol)
+        scope.argList = scope.argList :+ symbol
       }
-      scope.argList = scope.argList :+ symbol
     }
 
 
@@ -317,7 +320,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
       attachTypeTree(formal.tpe)
       method.lookupVar(formal.id.value) match {
         case Some(s) => formal.id.setSymbol(s);
-        case None => sys.error("attachFormal: no matching symbol for id")
+        case None => sys.error("attachFormal: no matching symbol for id: " + formal.id.value)
       }
     }
 
