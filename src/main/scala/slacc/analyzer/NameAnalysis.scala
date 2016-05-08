@@ -274,10 +274,14 @@ object NameAnalysis extends Pipeline[Program, Program] {
         }
       }
       unusedClassVars = unusedClassVars ++ classDecl.vars.map(v => v.id.value)
-      classDecl.methods.foreach(method => attachMethod(method, classDecl.getSymbol))
       classDecl.vars.foreach(v => attachVariable(v, classDecl.getSymbol))
+      classDecl.methods.foreach(method => attachMethod(method, classDecl.getSymbol))
       if (unusedClassVars.nonEmpty) {
-        warning("Class " + className + " has unused class variables: " + unusedClassVars.toList.mkString(", "), classDecl)
+//        warning("Class " + className + " has unused class variables: " + unusedClassVars.toList.mkString(", "), classDecl)
+        for (elem <- unusedClassVars) {
+          val varSym = classDecl.getSymbol.lookupVar(elem).get
+          warning("Class " + className + " has unused class variable: " + varSym.name, varSym)
+        }
       }
       unusedClassVars = Set()
     }
@@ -297,10 +301,16 @@ object NameAnalysis extends Pipeline[Program, Program] {
       attachExpr(method.retExpr, method.getSymbol)
       attachRetType(method.retType, method.getSymbol)
       if (unusedMethodArgs.nonEmpty) {
-        warning(scope.name + "." + methodName + " has unused args: " + unusedMethodArgs.toList.mkString(", "), method)
+        for (elem <- unusedMethodArgs) {
+          val argSym = method.getSymbol.lookupVar(elem).get
+          warning("Method " + scope.name + "." + methodName + " has unused param " + argSym.name, argSym)
+        }
       }
       if (unusedMethodVars.nonEmpty) {
-        warning(scope.name + "." + methodName + " has unused vars " + unusedMethodVars.toList.mkString(", "), method)
+        for (elem <- unusedMethodVars) {
+          val varSym = method.getSymbol.lookupVar(elem).get
+          warning("Method " + scope.name + "." + methodName + " has unused var " + varSym.name, varSym)
+        }
       }
       unusedMethodArgs = Set()
       unusedMethodVars = Set()
