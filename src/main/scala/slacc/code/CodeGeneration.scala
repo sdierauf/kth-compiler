@@ -70,24 +70,35 @@ object CodeGeneration extends Pipeline[Program, Unit] {
       // TODO: Emit code
       def generateExprCode (ex: ExprTree): Unit = {
         ex match {
-            // in each case cons onto ch
-            // ch << blah << blah << blah
           case t : And => {
-            generateExprCode(t.lhs)
-            generateExprCode(t.rhs)
+            val labelName = ch.getFreshLabel("shortCircuitAnd")
+            generateExprCode(t.lhs) // push lhs on stack
+            ch << Ldc(0) // push 0 on the stack
+            ch << If_ICmpEq(labelName) // if LHS is False (== 0), jump to the labelName, don't eval rhs
+            generateExprCode(t.rhs) // whatever is pushed on the stack here is the result of the eval
+            ch << Label(labelName) // jumps here if !LHS
           } case t : Or => {
-            generateExprCode(t.lhs)
+            val labelName = ch.getFreshLabel("shortCircuitOr")
+            generateExprCode(t.lhs) // push lhs on stack
+            ch << Ldc(1) // opposite of case above
+            ch << If_ICmpEq(labelName)
             generateExprCode(t.rhs)
+            ch << Label(labelName)
           } case t : Plus => {
             if (t.getType == TInt) {
               // Addition - trick is to load left and right hand sides first... i think
               generateExprCode(t.lhs)
               generateExprCode(t.rhs)
               ch << IADD
-            } else {
+            } else if (t.getType == TString) {
               // String concat
+              val buffer = new StringBuilder()
               generateExprCode(t.lhs)
               generateExprCode(t.rhs)
+              //buffer.append(t.lhs.value) // if we get this far, have faith it's a string
+              //buffer.append(t.rhs.value)
+              //ch << Ldc(buffer.toString)
+              // wait a minute
               ???
             }
           } case t : Minus => {
@@ -103,15 +114,24 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             generateExprCode(t.rhs)
             ch << IDIV
           } case t : LessThan => {
-            // ch << If_ICmpLt()
-            ???
+            val labelName = ch.getFreshLabel("GEQ")
+            generateExprCode(t.lhs)
+            generateExprCode(t.rhs)
+            ch << If_ICmpGe(labelName) // if LHS >= RHS jump to label
+            ch << Ldc(1) // if here it's true LHS < RHS
+            ch << Label(labelName)
+            ch << Ldc(0)
           } case t : Equals => {
-            if (t.lhs.getType == TBoolean) {
-
-            } else if (t.lhs.getType == TInt) {
-
+            val labelName = ch.getFreshLabel("notEqual")
+            if (t.lhs.getType == TBoolean || t.lhs.getType == TInt) {
+              generateExprCode(t.lhs) // counting on true to always push 1 to the stack :/
+              generateExprCode(t.rhs)
+              ch << If_ICmpNe(labelName)
+              ch << Ldc(1)
+              ch << Label(labelName)
+              ch << Ldc(0)
             } else {
-              // String and object reference comparisons
+
             }
           } case b : Block => {
             b.exprs.foreach(e => generateExprCode(e))
@@ -154,10 +174,10 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             ch << Ldc(i.value)
           }
           case b1 : True => {
-            ???
+            ch << Ldc(1)
           }
           case b2 : False => {
-            ???
+            ch << Ldc(0)
           }
           case s : StringLit => {
             ch << Ldc(s.value)
