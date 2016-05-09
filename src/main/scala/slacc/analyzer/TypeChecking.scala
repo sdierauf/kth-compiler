@@ -1,6 +1,6 @@
 package slacc.analyzer
 
-import slacc.analyzer.Symbols.MethodSymbol
+import slacc.analyzer.Symbols.{ClassSymbol, MethodSymbol}
 import slacc.analyzer.Types._
 import slacc.ast.Printer
 import slacc.ast.Trees.{ExprTree, Program, _}
@@ -236,7 +236,8 @@ object TypeChecking extends Pipeline[Program, Program] {
     }
 
     prog.classes.foreach(klass =>
-      klass.methods.foreach(m => m.exprs.foreach(ex => tcExpr(ex))))
+      klass.methods.foreach(m => {m.exprs.foreach(ex => tcExpr(ex))})
+    )
     prog.main.main.exprs.foreach(ex => tcExpr(ex))
     tcExpr(prog.main.main.retExpr)
 

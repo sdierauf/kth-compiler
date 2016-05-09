@@ -14,6 +14,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
   def run(ctx: Context)(prog: Program): Unit = {
     import ctx.reporter._
 
+
     /** Writes the proper .class file in a given directory. An empty string for dir is equivalent to "./". */
     def generateClassFile(sourceName: String, ct: ClassDecl, dir: String): Unit = {
       // TODO: Create code handler, save to files ...
@@ -29,6 +30,20 @@ object CodeGeneration extends Pipeline[Program, Unit] {
       }
       classFile.writeToFile(fileDest + ct.id.value + ".class")
 
+    }
+
+    def getPrefixForType(typ: Type): String = {
+      typ match {
+        case TError => fatal("getPrefixForType: got " + TError)
+        case TUntyped => fatal("getPrefixForType: got " + TUntyped)
+        case TInt => "I"
+        case TBoolean => "Z"
+        case TString => "L"
+        case TUnit => "V" //void
+        case TIntArray => "[I"
+        case anyObject => "?"
+        case _ => fatal("getPrefixForType: got " + typ)
+      }
     }
 
     // a mapping from variable symbols to positions in the local variables
