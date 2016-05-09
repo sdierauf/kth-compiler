@@ -317,8 +317,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
       unusedMethodVars = unusedMethodVars ++ method.vars.map(v => v.id.value)
       method.args.foreach(formal => attachFormal(formal, method.getSymbol))
       method.vars.foreach(v => attachVariable(v, method.getSymbol))
-      method.exprs.foreach(exp => attachExpr(exp, method.getSymbol))
-      attachExpr(method.retExpr, method.getSymbol)
+      (method.exprs :+ method.retExpr).foreach(exp => attachExpr(exp, method.getSymbol))
       attachRetType(method.retType, method.getSymbol)
       if (unusedMethodArgs.nonEmpty) {
         for (elem <- unusedMethodArgs) {

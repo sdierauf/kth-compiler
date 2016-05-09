@@ -236,10 +236,10 @@ object TypeChecking extends Pipeline[Program, Program] {
     }
 
     prog.classes.foreach(klass =>
-      klass.methods.foreach(m => {m.exprs.foreach(ex => tcExpr(ex))})
+      klass.methods.foreach(m => {(m.exprs :+ m.retExpr).foreach(ex => tcExpr(ex));})
     )
-    prog.main.main.exprs.foreach(ex => tcExpr(ex))
-    tcExpr(prog.main.main.retExpr)
+    (prog.main.main.exprs :+ prog.main.main.retExpr).foreach(ex => tcExpr(ex))
+//    tcExpr(prog.main.main.retExpr)
 
     if (ctx.doSymbolIds) {
       println("doing symbolids 11!!!!")
