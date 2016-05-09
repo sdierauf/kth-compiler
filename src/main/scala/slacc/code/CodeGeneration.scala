@@ -14,6 +14,16 @@ object CodeGeneration extends Pipeline[Program, Unit] {
   def run(ctx: Context)(prog: Program): Unit = {
     import ctx.reporter._
 
+    def addFieldToClass(cls:ClassFile, name: String, tpe:Type): Unit = {
+      cls.addField(getPrefixForType(tpe), name)
+    }
+
+    def addMethodToClass(cls: ClassFile, name: String, paramTypes : Option[List[Type]], returnType: Type): Unit = {
+      var paramsString = paramTypes match {
+        case Some(params) => params.foreach(p => getPrefixForType(p))
+      }
+      // cls.addMethod(getPrefixForType(returnType), name, )
+    }
 
     /** Writes the proper .class file in a given directory. An empty string for dir is equivalent to "./". */
     def generateClassFile(sourceName: String, ct: ClassDecl, dir: String): Unit = {
@@ -22,14 +32,16 @@ object CodeGeneration extends Pipeline[Program, Unit] {
         case Some(p) => new ClassFile(ct.id.value, Some(p.value))
         case None => new ClassFile(ct.id.value, None)
       }
-
+      // Add fields
+      ct.vars.foreach(v => addFieldToClass(classFile, v.id.value, v.getSymbol.getType))
+      // Add methods
+      ct.methods.foreach(m => addMethodToClass(classFile, m.))
       classFile.setSourceFile(sourceName)
       val fileDest = dir match {
         case "" => "./"
         case _ => dir
       }
       classFile.writeToFile(fileDest + ct.id.value + ".class")
-
     }
 
     def getPrefixForType(typ: Type): String = {
