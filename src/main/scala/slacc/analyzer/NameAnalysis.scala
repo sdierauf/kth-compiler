@@ -31,12 +31,12 @@ object NameAnalysis extends Pipeline[Program, Program] {
 
     def addClassSymbol(klass: ClassDecl, scope: GlobalScope): Unit = {
       val className = klass.id.value
-      classNameToClass += (className -> klass)
       val symbol = new ClassSymbol(className).setPos(klass)
       scope.lookupClass(className) match {
         case Some(v) => error("collectClassDecl2: already a class with that name defined in the scope", v);
         case None => scope.classes += (className -> symbol)
       }
+      classNameToClass += (className -> klass)
     }
 
     def checkParent(klass: ClassDecl, scope: GlobalScope): Unit = {
@@ -75,6 +75,11 @@ object NameAnalysis extends Pipeline[Program, Program] {
     def collectClassDecl(klass: ClassDecl, scope: GlobalScope): Unit = {
       val className = klass.id.value
       println("collecting " + className)
+      if (collectedClasses.contains(className)) {
+        return
+      } else {
+        collectedClasses += className
+      }
       val symbol = scope.lookupClass(className).get
       klass.vars.foreach(v => collectVarDecl(v, symbol))
       klass.methods.foreach(m => collectMethodDecl(m , symbol))
