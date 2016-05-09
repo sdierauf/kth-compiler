@@ -140,13 +140,14 @@ object NameAnalysis extends Pipeline[Program, Program] {
       // TODO: How the fuck do we know if it's overloaded or not?!?
       if (scope.methods.contains(methodName)) {
         error("collectMethodDecl: method " + methodName + " was already defined!", method)
-      }
-      scope.lookupMethod(methodName) match {
-        case Some(parentMethod) => {
-          if (parentMethod.argList.length != method.args.length) error("Overriding method with unequal number of arguments in " + methodName, method)
-          addMethod()
+      } else {
+        scope.lookupMethod(methodName) match {
+          case Some(parentMethod) => {
+            if (parentMethod.argList.length != method.args.length) error("Overriding method with unequal number of arguments in " + methodName, method)
+            else addMethod()
+          }
+          case None => addMethod()
         }
-        case None => addMethod()
       }
     }
 
@@ -294,7 +295,10 @@ object NameAnalysis extends Pipeline[Program, Program] {
       if (unusedClassVars.nonEmpty) {
 //        warning("Class " + className + " has unused class variables: " + unusedClassVars.toList.mkString(", "), classDecl)
         for (elem <- unusedClassVars) {
-          val varSym = classDecl.getSymbol.lookupVar(elem).get
+          val varSym = classDecl.getSymbol.lookupVar(elem) match {
+            case Some(s) => s
+            case None => new VariableSymbol("NO MATCHING SYMBOL: " + elem)
+          }
           warning("Class " + className + " has unused class variable: " + varSym.name, varSym)
         }
       }
@@ -317,13 +321,19 @@ object NameAnalysis extends Pipeline[Program, Program] {
       attachRetType(method.retType, method.getSymbol)
       if (unusedMethodArgs.nonEmpty) {
         for (elem <- unusedMethodArgs) {
-          val argSym = method.getSymbol.lookupVar(elem).get
+          val argSym = method.getSymbol.lookupVar(elem) match {
+            case Some(s) => s
+            case None => new VariableSymbol("NO MATCHING SYMBOL: " + elem)
+          }
           warning("Method " + scope.name + "." + methodName + " has unused param " + argSym.name, argSym)
         }
       }
       if (unusedMethodVars.nonEmpty) {
         for (elem <- unusedMethodVars) {
-          val varSym = method.getSymbol.lookupVar(elem).get
+          val varSym = method.getSymbol.lookupVar(elem) match {
+            case Some(s) => s
+            case None => new VariableSymbol("NO MATCHING SYMBOL: " + elem)
+          }
           warning("Method " + scope.name + "." + methodName + " has unused var " + varSym.name, varSym)
         }
       }
