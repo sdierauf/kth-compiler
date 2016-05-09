@@ -46,6 +46,7 @@ object TypeChecking extends Pipeline[Program, Program] {
         case _ => fatal ("tcExpr: what happened")
       }
 
+      expr.setType(tpe)
 
       // Check result and return a valid type in case of error
       if (expected.isEmpty) {
