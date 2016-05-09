@@ -68,34 +68,43 @@ object CodeGeneration extends Pipeline[Program, Unit] {
       val methSym = mt.getSymbol
 
       // TODO: Emit code
-      def expr2Code (ex: ExprTree): Unit = {
+      def generateExprCode (ex: ExprTree): Unit = {
         ex match {
             // in each case cons onto ch
             // ch << blah << blah << blah
           case t : And => {
-            expr2Code(t.lhs)
-            expr2Code(t.rhs)
+            generateExprCode(t.lhs)
+            generateExprCode(t.rhs)
           } case t : Or => {
-            expr2Code(t.lhs)
-            expr2Code(t.rhs)
+            generateExprCode(t.lhs)
+            generateExprCode(t.rhs)
           } case t : Plus => {
             if (t.getType == TInt) {
-              // Addition
+              // Addition - trick is to load left and right hand sides first... i think
+              generateExprCode(t.lhs)
+              generateExprCode(t.rhs)
+              ch << IADD
             } else {
               // String concat
+              generateExprCode(t.lhs)
+              generateExprCode(t.rhs)
+              ???
             }
           } case t : Minus => {
-            expr2Code(t.lhs)
-            expr2Code(t.rhs)
+            generateExprCode(t.lhs)
+            generateExprCode(t.rhs)
+            ch << ISUB
           } case t : Times => {
-            expr2Code(t.lhs)
-            expr2Code(t.rhs)
+            generateExprCode(t.lhs)
+            generateExprCode(t.rhs)
+            ch << IMUL
           } case t : Div => {
-            expr2Code(t.lhs)
-            expr2Code(t.rhs)
+            generateExprCode(t.lhs)
+            generateExprCode(t.rhs)
+            ch << IDIV
           } case t : LessThan => {
-            expr2Code(t.lhs)
-            expr2Code(t.rhs)
+            // ch << If_ICmpLt()
+            ???
           } case t : Equals => {
             if (t.lhs.getType == TBoolean) {
 
@@ -105,50 +114,53 @@ object CodeGeneration extends Pipeline[Program, Unit] {
               // String and object reference comparisons
             }
           } case b : Block => {
-            b.exprs.foreach(e => expr2Code(e))
+            b.exprs.foreach(e => generateExprCode(e))
           } case ifthen : If => {
-            expr2Code(ifthen.expr)
-            expr2Code(ifthen.thn)
-            ifthen.els match {
-              case Some(e3) => expr2Code(e3)
-              case None =>
-            }
+            ???
           } case w : While => {
-            expr2Code(w.body)
-            expr2Code(w.cond)
+            ???
           } case p : Println => {
-            expr2Code(p.expr)
+            ch << GetStatic("java/lang/System", "out", "Ljava/io/PrintStream;")
+            generateExprCode(p.expr)
+            ch << InvokeVirtual("java/io/PrintStream", "println", "(Ljava/lang/String;)V")
           } case s : Strof => {
             if (s.expr.getType != TString) {
-
+              ???
             }
           }
           case a : Assign => {
-            expr2Code(a.id)
-            expr2Code(a.expr)
+            ???
           } 
           case i : Identifier => {
+            ???
           }
           case m :MethodCall => {
-            expr2Code(m.obj)
-            expr2Code(m.meth)
-            m.args.foreach(ar => expr2Code(ar))
+            ???
           }
           case e: ArrayRead => {
-            expr2Code(e.arr)
-            expr2Code(e.index)
+            ???
           }
           case e: ArrayLength => {
-            expr2Code(e.arr)
+            ???
           }
           case e: ArrayAssign => {
-            expr2Code(e.id)
-            expr2Code(e.expr)
-            expr2Code(e.index)
+            ???
           }
           case n: New => {
-            attachTypeTree(n.tpe)
-            expr2Code(n.tpe)
+            ???
+          }
+          case i : IntLit => {
+            // push it onto the stack
+            ch << Ldc(i.value)
+          }
+          case b1 : True => {
+            ???
+          }
+          case b2 : False => {
+            ???
+          }
+          case s : StringLit => {
+            ch << Ldc(s.value)
           }
         }
       }
