@@ -19,9 +19,10 @@ object NameAnalysis extends Pipeline[Program, Program] {
     var unusedMethodArgs: Set[String] = Set()
     var unusedClassVars: Set[String] = Set()
     var unusedMethodVars: Set[String] = Set()
+    var classNameToClass: Map[String, ClassDecl] = Map()
+    var collectedClasses: Set[String] = Set()
 
     def useVariable(variable: String): Unit ={
-      println("useVariable: using " + variable)
       unusedMethodArgs = unusedMethodArgs - variable
       unusedClassVars = unusedClassVars - variable
       unusedMethodVars = unusedMethodVars - variable
@@ -30,6 +31,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
 
     def addClassSymbol(klass: ClassDecl, scope: GlobalScope): Unit = {
       val className = klass.id.value
+      classNameToClass += (className -> klass)
       val symbol = new ClassSymbol(className).setPos(klass)
       scope.lookupClass(className) match {
         case Some(v) => error("collectClassDecl2: already a class with that name defined in the scope", v);
@@ -51,8 +53,11 @@ object NameAnalysis extends Pipeline[Program, Program] {
           if (hasInheritanceCycle(symbol, scope)) {
             error("checkParent: symbol " + klass.id.value + " was part of an inheritance cycle!!", symbol)
           }
+          // collect parent's methods and vars before collecting this one
+          checkParent(classNameToClass.get(parent.get.name).get, scope)
+          collectClassDecl(klass, scope)
         }
-        case None =>
+        case None => collectClassDecl(klass, scope)
       }
     }
 
@@ -69,6 +74,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
 
     def collectClassDecl(klass: ClassDecl, scope: GlobalScope): Unit = {
       val className = klass.id.value
+      println("collecting " + className)
       val symbol = scope.lookupClass(className).get
       klass.vars.foreach(v => collectVarDecl(v, symbol))
       klass.methods.foreach(m => collectMethodDecl(m , symbol))
@@ -386,7 +392,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
     // if class has parent, make sure parent's symbol is there
     prog.classes.foreach(classDecl => checkParent(classDecl, globalScope))
     // then do the for real colleciton on everything else
-    prog.classes.foreach(classDecl => collectClassDecl(classDecl, globalScope))
+//    prog.classes.foreach(classDecl => collectClassDecl(classDecl, globalScope))
     // then
     collectMainMethod(prog.main, globalScope)
 

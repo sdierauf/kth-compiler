@@ -17,7 +17,18 @@ object CodeGeneration extends Pipeline[Program, Unit] {
     /** Writes the proper .class file in a given directory. An empty string for dir is equivalent to "./". */
     def generateClassFile(sourceName: String, ct: ClassDecl, dir: String): Unit = {
       // TODO: Create code handler, save to files ...
-      ???
+      val classFile = ct.parent match {
+        case Some(p) => new ClassFile(ct.id.value, Some(p.value))
+        case None => new ClassFile(ct.id.value, None)
+      }
+
+      classFile.setSourceFile(sourceName)
+      val fileDest = dir match {
+        case "" => "./"
+        case _ => dir
+      }
+      classFile.writeToFile(fileDest + ct.id.value + ".class")
+
     }
 
     // a mapping from variable symbols to positions in the local variables

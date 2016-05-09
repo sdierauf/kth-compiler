@@ -53,7 +53,12 @@ object Symbols {
     def lookupMethod(n: String): Option[MethodSymbol] = {
       var ret = methods.get(n)
       if (ret.isEmpty && parent.isDefined) {
+        println("class " + name + " looking for " + n + " in parent " + parent.get.name)
         ret = parent.get.lookupMethod(n)
+      }
+      ret match {
+        case Some(m) => println("found " + m.name + " with id " + m.id)
+        case None => println("didnt find " + n)
       }
       ret
     }
