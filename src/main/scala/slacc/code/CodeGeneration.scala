@@ -18,11 +18,12 @@ object CodeGeneration extends Pipeline[Program, Unit] {
       cls.addField(getPrefixForType(tpe), name)
     }
 
-    def addMethodToClass(cls: ClassFile, name: String, paramTypes : Option[List[Type]], returnType: Type): Unit = {
-      var paramsString = paramTypes match {
-        case Some(params) => params.foreach(p => getPrefixForType(p))
-      }
-      // cls.addMethod(getPrefixForType(returnType), name, )
+    def addMethodToClass(cls: ClassFile, name: String, args : List[VariableSymbol], returnType: Type): CodeHandler = {
+      var paramsString = new StringBuilder()
+      val paramsList : List[Type] = List()
+      args.foreach(z => paramsList:+(z.getType))
+      paramsList.foreach(p => paramsString.append(getPrefixForType(p)))
+      cls.addMethod(getPrefixForType(returnType), name, paramsString.toString).codeHandler
     }
 
     /** Writes the proper .class file in a given directory. An empty string for dir is equivalent to "./". */
@@ -35,7 +36,10 @@ object CodeGeneration extends Pipeline[Program, Unit] {
       // Add fields
       ct.vars.foreach(v => addFieldToClass(classFile, v.id.value, v.getSymbol.getType))
       // Add methods
-      ct.methods.foreach(m => addMethodToClass(classFile, m.))
+      for (m <- ct.methods) {
+        val ch = addMethodToClass(classFile, m.id.value, m.getSymbol.argList, m.retType.getType)
+        generateMethodCode(ch, m)
+      }
       classFile.setSourceFile(sourceName)
       val fileDest = dir match {
         case "" => "./"
