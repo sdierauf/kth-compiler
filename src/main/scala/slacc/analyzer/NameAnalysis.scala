@@ -138,9 +138,13 @@ object NameAnalysis extends Pipeline[Program, Program] {
         method.vars.foreach(v => collectVarDecl(v, symbol))
       }
       // TODO: How the fuck do we know if it's overloaded or not?!?
+      if (scope.methods.contains(methodName)) {
+        error("collectMethodDecl: method " + methodName + " was already defined!", method)
+      }
       scope.lookupMethod(methodName) match {
-        case Some(m) => {
-          error("collectMethodDecl: method " + methodName + " was already defined!", method)
+        case Some(parentMethod) => {
+          if (parentMethod.argList.length != method.args.length) error("Overriding method with unequal number of arguments in " + methodName, method)
+          addMethod()
         }
         case None => addMethod()
       }
