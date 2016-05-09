@@ -79,8 +79,11 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             expr2Code(t.lhs)
             expr2Code(t.rhs)
           } case t : Plus => {
-            expr2Code(t.lhs)
-            expr2Code(t.rhs)
+            if (t.getType == TInt) {
+              // Addition
+            } else {
+              // String concat
+            }
           } case t : Minus => {
             expr2Code(t.lhs)
             expr2Code(t.rhs)
@@ -94,8 +97,13 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             expr2Code(t.lhs)
             expr2Code(t.rhs)
           } case t : Equals => {
-            expr2Code(t.lhs)
-            expr2Code(t.rhs)
+            if (t.lhs.getType == TBoolean) {
+
+            } else if (t.lhs.getType == TInt) {
+
+            } else {
+              // String and object reference comparisons
+            }
           } case b : Block => {
             b.exprs.foreach(e => expr2Code(e))
           } case ifthen : If => {
@@ -111,11 +119,11 @@ object CodeGeneration extends Pipeline[Program, Unit] {
           } case p : Println => {
             expr2Code(p.expr)
           } case s : Strof => {
-            expr2Code(s.expr)
+            if (s.expr.getType != TString) {
+
+            }
           }
           case a : Assign => {
-            // need to check that the variable being assigned has been declared
-            // or do we do that somewhere else
             expr2Code(a.id)
             expr2Code(a.expr)
           } 
