@@ -169,26 +169,33 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             ???
           }
           case m :MethodCall => {
-            // InvokeVirtual - need Class, methodname, (arg) and return types in the usual convention
             m.args.foreach(a => generateExprCode(a)) // push args onto the stack
-            // m.obj.getType.toString() // should give us the class I think
-            ???
+            val methSig = "(" + m.args.foreach(a => getPrefixForType(a.getType)) + ")" + getPrefixForType(m.getType)
+            ch << InvokeVirtual(methSym.classSymbol.name, m.meth.value, methSig)
           }
           case e: ArrayRead => {
-            ???
+            generateExprCode(e.arr)
+            generateExprCode(e.index)
+            ch << IALOAD
           }
           case e: ArrayLength => {
-            ???
+            generateExprCode(e.arr)
+            ch << ARRAYLENGTH
           }
           case e: ArrayAssign => {
-
-            ???
+            generateExprCode(e.id)
+            generateExprCode(e.index)
+            generateExprCode(e.expr) // integer to be stored
+            ch << IASTORE
           }
           case n: New => {
-            ???
+            ch << DefaultNew(n.tpe.toString())
+          }
+          case i : NewIntArray => {
+            generateExprCode(i.size) // push size to onto the stack
+            ch << NewArray(10) // 10 is T_INT
           }
           case i : IntLit => {
-            // push it onto the stack
             ch << Ldc(i.value)
           }
           case b1 : True => {
