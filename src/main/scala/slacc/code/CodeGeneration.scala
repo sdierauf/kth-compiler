@@ -8,8 +8,16 @@ import cafebabe._
 import AbstractByteCodes.{New => _, _}
 import ByteCodes._
 import utils._
+import scala.collection.mutable.Map
 
 object CodeGeneration extends Pipeline[Program, Unit] {
+
+  var slot : Map[VariableSymbol, Integer] = Map();
+  var slotN : Integer = 0;
+
+  def updateSlot(): Unit = {
+    if (slotN > 3) slotN = 0 else slotN += 1
+  }
 
   def run(ctx: Context)(prog: Program): Unit = {
     import ctx.reporter._
@@ -27,7 +35,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
     }
 
     /** Writes the proper .class file in a given directory. An empty string for dir is equivalent to "./". */
-    def generateClassFile(sourceName: String, ct: ClassDecl, dir: String): Unit = {
+    def generateClassFile(sourceName: String, ct: ClassDecl, dir: String): ClassFile = {
       // TODO: Create code handler, save to files ...
       val classFile = ct.parent match {
         case Some(p) => new ClassFile(ct.id.value, Some(p.value))
@@ -45,7 +53,9 @@ object CodeGeneration extends Pipeline[Program, Unit] {
         case "" => "./"
         case _ => dir
       }
+      classFile.addDefaultConstructor
       classFile.writeToFile(fileDest + ct.id.value + ".class")
+      classFile
     }
 
     def getPrefixForType(typ: Type): String = {
@@ -67,7 +77,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
     def generateMethodCode(ch: CodeHandler, mt: MethodDecl): Unit = {
       val methSym = mt.getSymbol
 
-      // TODO: Emit code
+      // TODO: how tf to deal with args
       def generateExprCode (ex: ExprTree): Unit = {
         ex match {
           case t : And => {
@@ -171,10 +181,50 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             }
           }
           case a : Assign => {
-            ???
+            // look up the symbol
+            val sym = methSym.lookupVar(a.id.value) orElse methSym.classSymbol.lookupVar(a.id.value)
+
+            sym match {
+              case Some(s) => {
+                slot(s) = slotN
+                generateExprCode(a.expr) // put it on the stack
+                s.getType match {
+                  case TBoolean => {
+                    ch << IStore(slotN)
+                    updateSlot()
+                  }
+                  case TInt => {
+                    ch << IStore(slotN)
+                    updateSlot()
+                  }
+                  case _ => { // it a reference
+                    ch << AStore(slotN)
+                    updateSlot()
+                  }
+                }
+              }
+              case None => error("Look up failed for id: " + a.id.value)
+            }
           } 
-          case i : Identifier => {
-            ???
+          case i : Identifier => { // what if it's an Arg?
+            val sym = methSym.lookupVar(i.value) orElse methSym.classSymbol.lookupVar(i.value)
+            sym match {
+              case Some(s) => {
+                val n = slot(s) // get where it's stored
+                s.getType match {
+                  case TBoolean => {
+                    ch << ILoad(n) // do i remove it from the mapping? what if i need it again?
+                  }
+                  case TInt => {
+                    ch << ILoad(n)
+                  }
+                  case _ => {
+                    ch << ALoad(n)
+                  }
+                }
+              }
+              case None => error("Look up failed for id: " + i.value)
+            }
           }
           case m :MethodCall => {
             m.args.foreach(a => generateExprCode(a)) // push args onto the stack
@@ -199,9 +249,9 @@ object CodeGeneration extends Pipeline[Program, Unit] {
           case n: New => {
             ch << DefaultNew(n.tpe.toString())
           }
-          case s: Self => {
-            ???
-          }
+//          case s: Self => { leaving this out for now
+//            ???
+//          }
           case n: Not => {
             val labelName = ch.getFreshLabel("not")
             ch << Ldc(0)
@@ -229,6 +279,15 @@ object CodeGeneration extends Pipeline[Program, Unit] {
         }
       }
 
+      mt.exprs.foreach(e => generateExprCode(e))
+      mt.retType.getType match {
+        case TInt => ch << IRETURN
+        case TUnit => ch << RETURN
+        case TBoolean => ch << IRETURN
+        case TObject(cs) => ch << ARETURN // return a reference
+        case TString => ch << ARETURN
+        case TIntArray => ch << ARETURN
+      }
       ch.freeze
     }
 
@@ -242,12 +301,14 @@ object CodeGeneration extends Pipeline[Program, Unit] {
     val sourceName = ctx.files.head.getName
 
     // output code
+    var classFile : ClassFile = null;
     prog.classes foreach {
-      ct => generateClassFile(sourceName, ct, outDir)
+      ct => classFile = generateClassFile(sourceName, ct, outDir)
     }
 
     // Now do the main method
-    // ...
+    val mainHandler = classFile.addMainMethod.codeHandler
+    generateMethodCode(mainHandler, prog.main.main)
   }
 
 }
