@@ -223,7 +223,7 @@ object Main {
 
       })
     } else if (ctx.doSymbolIds) {
-      val pipeline = Lexer andThen Parser andThen NameAnalysis andThen TypeChecking
+      val pipeline = Lexer andThen Parser andThen NameAnalysis andThen TypeChecking andThen CodeGeneration
       val ast = pipeline.run(ctx)(ctx.files.head)
     } else {
       ???

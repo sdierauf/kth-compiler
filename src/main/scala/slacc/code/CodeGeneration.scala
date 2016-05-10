@@ -16,7 +16,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
   var slotN : Integer = 0;
 
   def updateSlot(): Unit = {
-    if (slotN > 3) slotN = 0 else slotN += 1
+    if (slotN == 3) slotN = 0 else slotN += 1
   }
 
   def run(ctx: Context)(prog: Program): Unit = {
@@ -35,7 +35,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
     }
 
     /** Writes the proper .class file in a given directory. An empty string for dir is equivalent to "./". */
-    def generateClassFile(sourceName: String, ct: ClassDecl, dir: String): ClassFile = {
+    def generateClassFile(sourceName: String, ct: ClassDecl, dir: String): Unit = {
       // TODO: Create code handler, save to files ...
       val classFile = ct.parent match {
         case Some(p) => new ClassFile(ct.id.value, Some(p.value))
@@ -55,7 +55,6 @@ object CodeGeneration extends Pipeline[Program, Unit] {
       }
       classFile.addDefaultConstructor
       classFile.writeToFile(fileDest + ct.id.value + ".class")
-      classFile
     }
 
     def getPrefixForType(typ: Type): String = {
@@ -301,14 +300,15 @@ object CodeGeneration extends Pipeline[Program, Unit] {
     val sourceName = ctx.files.head.getName
 
     // output code
-    var classFile : ClassFile = null;
     prog.classes foreach {
-      ct => classFile = generateClassFile(sourceName, ct, outDir)
+      ct => generateClassFile(sourceName, ct, outDir)
     }
 
-    // Now do the main method
-    val mainHandler = classFile.addMainMethod.codeHandler
+    val mainClass = new ClassFile("Main", None)
+    // Now do the main method - how to do this without a class file
+    val mainHandler = mainClass.addMainMethod.codeHandler
     generateMethodCode(mainHandler, prog.main.main)
+    mainClass.writeToFile("Main.class") // TODO: how tf to handle directory
   }
 
 }
