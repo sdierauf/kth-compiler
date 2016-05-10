@@ -143,7 +143,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
       } else {
         scope.lookupMethod(methodName) match {
           case Some(parentMethod) => {
-            if (parentMethod.argList.length != method.args.length) error("Overriding method with unequal number of arguments in " + methodName, method))
+            if (parentMethod.argList.length != method.args.length) error("Overriding method with unequal number of arguments in " + methodName, method)
 
             else addMethod()
           }

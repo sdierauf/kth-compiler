@@ -1,5 +1,6 @@
 package slacc
 
+import slacc.code.CodeGeneration
 import utils._
 import java.io.{File, PrintWriter}
 
