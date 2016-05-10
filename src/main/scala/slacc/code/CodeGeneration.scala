@@ -91,15 +91,12 @@ object CodeGeneration extends Pipeline[Program, Unit] {
               generateExprCode(t.rhs)
               ch << IADD
             } else if (t.getType == TString) {
-              // String concat
-              val buffer = new StringBuilder()
+              ch << DefaultNew("java/lang/StringBuilder")
               generateExprCode(t.lhs)
+              ch << InvokeVirtual("java/lang/StringBuilder", "append", "(Ljava/lang/String)Ljava/lang/StringBuilder")
               generateExprCode(t.rhs)
-              //buffer.append(t.lhs.value) // if we get this far, have faith it's a string
-              //buffer.append(t.rhs.value)
-              //ch << Ldc(buffer.toString)
-              // wait a minute
-              ???
+              ch << InvokeVirtual("java/lang/StringBuilder", "append", "(Ljava/lang/String)Ljava/lang/StringBuilder")
+              ch << InvokeVirtual("java/lang/StringBuilder", "toString", "()Ljava/lang/String")
             }
           } case t : Minus => {
             generateExprCode(t.lhs)
@@ -158,8 +155,19 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             generateExprCode(p.expr)
             ch << InvokeVirtual("java/io/PrintStream", "println", "(Ljava/lang/String;)V")
           } case s : Strof => {
-            if (s.expr.getType != TString) {
-              ???
+            s.expr.getType match {
+              case TInt => {
+                ch << DefaultNew("java/lang/StringBuilder")
+                generateExprCode(s.expr) // load arg onto stack
+                ch << InvokeVirtual("java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder")
+                ch << InvokeVirtual("java/lang/StringBuilder", "toString", "()Ljava/lang/String")
+              }
+              case TBoolean => {
+                ch << DefaultNew("java/lang/StringBuilder")
+                generateExprCode(s.expr) // load arg onto stack
+                ch << InvokeVirtual("java/lang/StringBuilder", "append", "(Z)Ljava/lang/StringBuilder")
+                ch << InvokeVirtual("java/lang/StringBuilder", "toString", "()Ljava/lang/String")
+              }
             }
           }
           case a : Assign => {
@@ -190,6 +198,17 @@ object CodeGeneration extends Pipeline[Program, Unit] {
           }
           case n: New => {
             ch << DefaultNew(n.tpe.toString())
+          }
+          case s: Self => {
+            ???
+          }
+          case n: Not => {
+            val labelName = ch.getFreshLabel("not")
+            ch << Ldc(0)
+            ch << If_ICmpEq(labelName)
+            ch << Ldc(0)
+            ch << Label(labelName)
+            ch << Ldc(1)
           }
           case i : NewIntArray => {
             generateExprCode(i.size) // push size to onto the stack
