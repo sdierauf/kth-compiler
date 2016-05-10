@@ -123,22 +123,36 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             ch << Ldc(0)
           } case t : Equals => {
             val labelName = ch.getFreshLabel("notEqual")
-            if (t.lhs.getType == TBoolean || t.lhs.getType == TInt) {
-              generateExprCode(t.lhs) // counting on true to always push 1 to the stack :/
-              generateExprCode(t.rhs)
-              ch << If_ICmpNe(labelName)
-              ch << Ldc(1)
-              ch << Label(labelName)
-              ch << Ldc(0)
-            } else {
+            generateExprCode(t.lhs) // counting on true to always push 1 to the stack :/
+            generateExprCode(t.rhs)
+            ch << If_ICmpNe(labelName)
+            ch << Ldc(1)
+            ch << Label(labelName)
+            ch << Ldc(0)
 
-            }
           } case b : Block => {
             b.exprs.foreach(e => generateExprCode(e))
           } case ifthen : If => {
-            ???
+            val labelName = ch.getFreshLabel("elseBranch")
+            generateExprCode(ifthen.expr)
+            ch << Ldc(0)
+            ch << If_ICmpEq(labelName) // if expr evals to false jump to else branch (if it exists)
+            generateExprCode(ifthen.thn)
+            ch << Label(labelName)
+            ifthen.els match {
+              case Some(e) => generateExprCode(e)
+              case _ => // do nothing
+            }
           } case w : While => {
-            ???
+            val labelName = ch.getFreshLabel("continue")
+            val labelNameQuit = ch.getFreshLabel("quit")
+            ch << Label(labelName)
+            generateExprCode(w.cond)
+            ch << Ldc(0)
+            ch << If_ICmpEq(labelNameQuit) // see if the condition is false, jump to quit
+            generateExprCode(w.body)
+            ch << Goto(labelName) // do the body and go back to continue label
+            ch << Label(labelNameQuit)
           } case p : Println => {
             ch << GetStatic("java/lang/System", "out", "Ljava/io/PrintStream;")
             generateExprCode(p.expr)
@@ -155,6 +169,9 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             ???
           }
           case m :MethodCall => {
+            // InvokeVirtual - need Class, methodname, (arg) and return types in the usual convention
+            m.args.foreach(a => generateExprCode(a)) // push args onto the stack
+            // m.obj.getType.toString() // should give us the class I think
             ???
           }
           case e: ArrayRead => {
@@ -164,6 +181,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             ???
           }
           case e: ArrayAssign => {
+
             ???
           }
           case n: New => {
