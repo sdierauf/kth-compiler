@@ -279,6 +279,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
       }
 
       mt.exprs.foreach(e => generateExprCode(e))
+      generateExprCode(mt.retExpr) // please be this
       mt.retType.getType match {
         case TInt => ch << IRETURN
         case TUnit => ch << RETURN
