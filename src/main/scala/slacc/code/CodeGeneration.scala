@@ -42,7 +42,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
         case None => new ClassFile(ct.id.value, None)
       }
       // Add fields
-      ct.vars.foreach(v => addFieldToClass(classFile, v.id.value, v.getSymbol.getType))
+      ct.vars.foreach(v => addFieldToClass(classFile, v.id.value, v.tpe.getType))
       // Add methods
       for (m <- ct.methods) {
         val ch = addMethodToClass(classFile, m.id.value, m.getSymbol.argList, m.retType.getType)
