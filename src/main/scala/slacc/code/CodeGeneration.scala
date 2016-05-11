@@ -213,7 +213,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
                 case Some(s) => {
                   if (methSym.argList.contains(s)) {
                     val n = methSym.argList.indexOf(s)
-                    ch << ArgLoad(n)
+                    ch << ArgLoad(n + 1) // +1 since 0 refers to "this"
                   } else {
                     val n = slot(s) // get where it's stored
                     s.getType match {
