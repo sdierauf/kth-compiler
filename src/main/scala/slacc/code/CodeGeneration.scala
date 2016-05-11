@@ -8,7 +8,7 @@ import cafebabe._
 import AbstractByteCodes.{New => _, _}
 import ByteCodes._
 import utils._
-import scala.collection.mutable.Map
+import scala.collection.mutable.{ListBuffer, Map}
 
 object CodeGeneration extends Pipeline[Program, Unit] {
 
@@ -26,10 +26,12 @@ object CodeGeneration extends Pipeline[Program, Unit] {
       cls.addField(getPrefixForType(tpe), name)
     }
 
-    def addMethodToClass(cls: ClassFile, name: String, args : List[VariableSymbol], returnType: Type): CodeHandler = {
+    def addMethodToClass(cls: ClassFile, name: String, sym: MethodSymbol, returnType: Type): CodeHandler = {
       var paramsString = new StringBuilder()
-      val paramsList : List[Type] = List()
-      args.foreach(z => paramsList:+(z.getType))
+      val paramsList : ListBuffer[Type] = ListBuffer()
+      for (k <- sym.argList) {
+        paramsList += k.getType
+      }
       paramsList.foreach(p => paramsString.append(getPrefixForType(p)))
       cls.addMethod(getPrefixForType(returnType), name, paramsString.toString).codeHandler
     }
@@ -45,7 +47,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
       ct.vars.foreach(v => addFieldToClass(classFile, v.id.value, v.tpe.getType))
       // Add methods
       for (m <- ct.methods) {
-        val ch = addMethodToClass(classFile, m.id.value, m.getSymbol.argList, m.retType.getType)
+        val ch = addMethodToClass(classFile, m.id.value, m.getSymbol, m.retType.getType)
         generateMethodCode(ch, m)
       }
       classFile.setSourceFile(sourceName)
@@ -207,24 +209,30 @@ object CodeGeneration extends Pipeline[Program, Unit] {
           } 
           case i : Identifier => { // what if it's an Arg?
             val sym = methSym.lookupVar(i.value) orElse methSym.classSymbol.lookupVar(i.value)
-            sym match {
-              case Some(s) => {
-                val n = slot(s) // get where it's stored
-                s.getType match {
-                  case TBoolean => {
-                    ch << ILoad(n) // do i remove it from the mapping? what if i need it again?
-                  }
-                  case TInt => {
-                    ch << ILoad(n)
-                  }
-                  case _ => {
-                    ch << ALoad(n)
+              sym match {
+                case Some(s) => {
+                  if (methSym.argList.contains(s)) {
+                    val n = methSym.argList.indexOf(s)
+                    ch << ArgLoad(n)
+                  } else {
+                    val n = slot(s) // get where it's stored
+                    s.getType match {
+                      case TBoolean => {
+                        ch << ILoad(n) // do i remove it from the mapping? what if i need it again?
+                      }
+                      case TInt => {
+                        ch << ILoad(n)
+                      }
+                      case _ => {
+                        ch << ALoad(n)
+                      }
+                    }
                   }
                 }
+                case None => error("Look up failed for id: " + i.value)
               }
-              case None => error("Look up failed for id: " + i.value)
             }
-          }
+
           case m :MethodCall => {
             m.args.foreach(a => generateExprCode(a)) // push args onto the stack
             val methSig = "(" + m.args.foreach(a => getPrefixForType(a.getType)) + ")" + getPrefixForType(m.getType)

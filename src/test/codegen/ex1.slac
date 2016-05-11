@@ -1,3 +1,12 @@
+class A {
+
+    method baz(v : Int) : Int = {
+        v;
+    }
+
+}
+
+
 method main() : Unit = {
     println("Hello world!");
 }

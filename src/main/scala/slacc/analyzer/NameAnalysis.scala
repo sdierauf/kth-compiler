@@ -13,7 +13,6 @@ object NameAnalysis extends Pipeline[Program, Program] {
   def run(ctx: Context)(prog: Program): Program = {
     import ctx.reporter._
 
-
     // Step 1: Collect symbols in declarations
     var globalScope = new GlobalScope()
     var unusedMethodArgs: Set[String] = Set()
@@ -27,7 +26,6 @@ object NameAnalysis extends Pipeline[Program, Program] {
       unusedClassVars = unusedClassVars - variable
       unusedMethodVars = unusedMethodVars - variable
     }
-
 
     def addClassSymbol(klass: ClassDecl, scope: GlobalScope): Unit = {
       val className = klass.id.value
@@ -61,7 +59,6 @@ object NameAnalysis extends Pipeline[Program, Program] {
       }
     }
 
-
     def collectMainMethod(n: MainMethod, scope: GlobalScope): Unit = {
       if (scope.mainClass != null) {
         error("collectMainMethod: Main class already declared", n)
@@ -70,7 +67,6 @@ object NameAnalysis extends Pipeline[Program, Program] {
       scope.classes += (n.id.value -> scope.mainClass)
       collectMethodDecl(n.main, scope.mainClass)
     }
-
 
     def collectClassDecl(klass: ClassDecl, scope: GlobalScope): Unit = {
       val className = klass.id.value
@@ -132,6 +128,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
     def collectMethodDecl(method: MethodDecl, scope: ClassSymbol): Unit = {
       val methodName = method.id.value
       val symbol = new MethodSymbol(methodName, scope).setPos(method)
+
       def addMethod(): Unit = {
         scope.methods += (methodName -> symbol)
         method.args.foreach(arg => collectFormal(arg, symbol))
@@ -339,6 +336,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
       }
       unusedMethodArgs = Set()
       unusedMethodVars = Set()
+5
     }
 
     def attachRetType(tpe: TypeTree, method: MethodSymbol): Unit = {
@@ -367,9 +365,10 @@ object NameAnalysis extends Pipeline[Program, Program] {
       // need to attach the id of the formal AND the type
       attachTypeTree(formal.tpe)
       method.lookupVar(formal.id.value) match {
-        case Some(s) => formal.id.setSymbol(s);
+        case Some(s) => formal.setSymbol(s); formal.id.setSymbol(s); ;
         case None => error("attachFormal: no matching symbol for id: " + formal.id.value, formal)
       }
+      formal.getSymbol.setType(formal.tpe.getType)
     }
 
     def attachVariable(v: VarDecl, scope: Symbol): Unit = {
@@ -396,10 +395,6 @@ object NameAnalysis extends Pipeline[Program, Program] {
         }
       }
     }
-
-
-
-
 
     // main
 
