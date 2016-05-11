@@ -65,7 +65,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
         case TUntyped => fatal("getPrefixForType: got " + TUntyped)
         case TInt => "I"
         case TBoolean => "Z"
-        case TString => "L"
+        case TString => "Ljava/lang/String;"
         case TUnit => "V" //void
         case TIntArray => "[I"
         case anyObject => "?"
@@ -78,7 +78,6 @@ object CodeGeneration extends Pipeline[Program, Unit] {
     def generateMethodCode(ch: CodeHandler, mt: MethodDecl): Unit = {
       val methSym = mt.getSymbol
 
-      // TODO: how tf to deal with args
       def generateExprCode (ex: ExprTree): Unit = {
         ex match {
           case t : And => {
@@ -257,7 +256,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             ch << DefaultNew(n.tpe.toString())
           }
 //          case s: Self => { leaving this out for now
-//            ???
+//            ch << ArgLoad(0)
 //          }
           case n: Not => {
             val labelName = ch.getFreshLabel("not")
@@ -314,7 +313,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
     }
 
     val mainClass = new ClassFile("Main", None)
-    // Now do the main method - how to do this without a class file
+    // Now do the main method
     val mainHandler = mainClass.addMainMethod.codeHandler
     generateMethodCode(mainHandler, prog.main.main)
     mainClass.writeToFile("Main.class") // TODO: how tf to handle directory
