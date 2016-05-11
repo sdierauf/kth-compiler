@@ -111,7 +111,7 @@ object TypeChecking extends Pipeline[Program, Program] {
     def tcLessThan(e: LessThan): Type = {
       val l = tcExpr(e.lhs, TInt)
       val r = tcExpr(e.rhs, TInt)
-      TInt
+      TBoolean
     }
 
     def tcEquals(e: Equals): Type = {
