@@ -103,10 +103,10 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             } else if (t.getType == TString) {
               ch << DefaultNew("java/lang/StringBuilder")
               generateExprCode(t.lhs)
-              ch << InvokeVirtual("java/lang/StringBuilder", "append", "(Ljava/lang/String)Ljava/lang/StringBuilder")
+              ch << InvokeVirtual("java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;")
               generateExprCode(t.rhs)
-              ch << InvokeVirtual("java/lang/StringBuilder", "append", "(Ljava/lang/String)Ljava/lang/StringBuilder")
-              ch << InvokeVirtual("java/lang/StringBuilder", "toString", "()Ljava/lang/String")
+              ch << InvokeVirtual("java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;")
+              ch << InvokeVirtual("java/lang/StringBuilder", "toString", "()Ljava/lang/String;")
             }
           } case t : Minus => {
             generateExprCode(t.lhs)
@@ -253,7 +253,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             ch << IASTORE
           }
           case n: New => {
-            ch << DefaultNew(n.tpe.toString())
+            ch << DefaultNew(n.tpe.value)
           }
 //          case s: Self => { leaving this out for now
 //            ch << ArgLoad(0)
@@ -286,7 +286,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
       }
 
       mt.exprs.foreach(e => generateExprCode(e))
-      generateExprCode(mt.retExpr) // please be this
+      generateExprCode(mt.retExpr)
       mt.retType.getType match {
         case TInt => ch << IRETURN
         case TUnit => ch << RETURN
