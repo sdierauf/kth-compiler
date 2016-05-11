@@ -169,14 +169,14 @@ object CodeGeneration extends Pipeline[Program, Unit] {
               case TInt => {
                 ch << DefaultNew("java/lang/StringBuilder")
                 generateExprCode(s.expr) // load arg onto stack
-                ch << InvokeVirtual("java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder")
-                ch << InvokeVirtual("java/lang/StringBuilder", "toString", "()Ljava/lang/String")
+                ch << InvokeVirtual("java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;")
+                ch << InvokeVirtual("java/lang/StringBuilder", "toString", "()Ljava/lang/String;")
               }
               case TBoolean => {
                 ch << DefaultNew("java/lang/StringBuilder")
                 generateExprCode(s.expr) // load arg onto stack
-                ch << InvokeVirtual("java/lang/StringBuilder", "append", "(Z)Ljava/lang/StringBuilder")
-                ch << InvokeVirtual("java/lang/StringBuilder", "toString", "()Ljava/lang/String")
+                ch << InvokeVirtual("java/lang/StringBuilder", "append", "(Z)Ljava/lang/StringBuilder;")
+                ch << InvokeVirtual("java/lang/StringBuilder", "toString", "()Ljava/lang/String;")
               }
             }
           }
