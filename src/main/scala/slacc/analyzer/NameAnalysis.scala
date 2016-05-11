@@ -374,19 +374,20 @@ object NameAnalysis extends Pipeline[Program, Program] {
     def attachVariable(v: VarDecl, scope: Symbol): Unit = {
 
       val varName = v.id.value
+      println("attaching " + v.id.value + " with type " + v.tpe)
       attachTypeTree(v.tpe)
       scope match {
         case s: ClassSymbol => {
           val symbol = s.lookupVar(varName)
           symbol match {
-            case Some(z) => v.setSymbol(z); v.id.setSymbol(z);
+            case Some(z) => v.setSymbol(z); v.id.setSymbol(z); v.getSymbol.setType(v.tpe.getType);
             case None => error("attachVariable: No matching variable:" + varName + " in  class: " + s.name, v)
           }
         }
         case s: MethodSymbol => {
           val symbol = s.lookupVar(varName)
           symbol match {
-            case Some(z) => v.setSymbol(z); v.id.setSymbol(z);
+            case Some(z) => v.setSymbol(z); v.id.setSymbol(z); v.getSymbol.setType(v.tpe.getType);
             case None => error("attachVariable: No matching variable: " + varName + " in method: " + s.name, v)
           }
         }
