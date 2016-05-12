@@ -212,9 +212,11 @@ object NameAnalysis extends Pipeline[Program, Program] {
               }
             }
         }
-        case m :MethodCall => {
+        case m :MethodCall => { // TODO: fix everything here p much type wise
           attachExpr(m.obj, symbol)
           attachExpr(m.meth, symbol)
+          val classSym = globalScope.lookupClass(m.obj.getType.toString).get
+          val methSym = classSym.lookupMethod(m.meth.value).get
           m.args.foreach(ar => attachExpr(ar, symbol))
         }
         case e: ArrayRead => {
@@ -277,7 +279,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
     def attachClassDecl(classDecl: ClassDecl, scope: GlobalScope): Unit = {
       val className = classDecl.id.value
       scope.lookupClass(className) match {
-        case Some(klass) => classDecl.setSymbol(klass); classDecl.id.setSymbol(klass)
+        case Some(klass) => classDecl.setSymbol(klass); classDecl.id.setSymbol(klass);// classDecl.getSymbol.setType(TObject(classDecl.getSymbol))
         case None => error("attachClassDecl: No matching class for ID " + className, classDecl)
       }
       if (classDecl.parent.isDefined) {
@@ -316,6 +318,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
       method.vars.foreach(v => attachVariable(v, method.getSymbol))
       (method.exprs :+ method.retExpr).foreach(exp => attachExpr(exp, method.getSymbol))
       attachRetType(method.retType, method.getSymbol)
+      method.getSymbol.setType(method.retType.getType) // TODO please let this be it
       if (unusedMethodArgs.nonEmpty) {
         for (elem <- unusedMethodArgs) {
           val argSym = method.getSymbol.lookupVar(elem) match {
@@ -348,6 +351,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
         case tpe: Identifier => {
           // look up in list of classes
           globalScope.lookupClass(tpe.value) match {
+
             case Some(z) => tpe.setSymbol(z); tpe.setType(TObject(z));
             case None => error("attachTypeTree: No matching class for identifier " + tpe.value, tpe)
           }
@@ -403,6 +407,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
     // should collect all class symbols before symbolzing their methods.
     // add all classes
     prog.classes.foreach(classDecl => addClassSymbol(classDecl, globalScope))
+
     // for each class, check
     // if class has parent, make sure parent's symbol is there
     prog.classes.foreach(classDecl => checkParent(classDecl, globalScope))
@@ -416,6 +421,8 @@ object NameAnalysis extends Pipeline[Program, Program] {
     // DEPLOY SYMBOLS
     prog.classes.foreach(classDecl => attachSymbols(classDecl, globalScope))
     attachSymbols(prog.main, globalScope)
+
+
 
     prog.classes.foreach(classDecl => println("class " + classDecl.id.value + "#" + classDecl.getSymbol.id))
 

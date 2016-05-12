@@ -26,6 +26,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
       cls.addField(getPrefixForType(tpe), name)
     }
 
+
     def addMethodToClass(cls: ClassFile, name: String, sym: MethodSymbol, returnType: Type): CodeHandler = {
       var paramsString = new StringBuilder()
       val paramsList : ListBuffer[Type] = ListBuffer()
@@ -68,7 +69,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
         case TString => "Ljava/lang/String;"
         case TUnit => "V" //void
         case TIntArray => "[I"
-        case anyObject => "?"
+        case TObject(c) => c.getType.toString
         case _ => fatal("getPrefixForType: got " + typ)
       }
     }
@@ -233,9 +234,10 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             }
 
           case m :MethodCall => {
+            val acc = new StringBuilder()
             m.args.foreach(a => generateExprCode(a)) // push args onto the stack
-            val methSig = "(" + m.args.foreach(a => getPrefixForType(a.getType)) + ")" + getPrefixForType(m.getType)
-            ch << InvokeVirtual(methSym.classSymbol.name, m.meth.value, methSig)
+            val methSig = m.args.foreach(a => acc.append(getPrefixForType(a.getType))) + getPrefixForType(m.meth.getSymbol.getType)
+            ch << InvokeVirtual(m.obj.getType.toString, m.meth.value, methSig)
           }
           case e: ArrayRead => {
             generateExprCode(e.arr)
@@ -255,9 +257,9 @@ object CodeGeneration extends Pipeline[Program, Unit] {
           case n: New => {
             ch << DefaultNew(n.tpe.value)
           }
-//          case s: Self => { leaving this out for now
-//            ch << ArgLoad(0)
-//          }
+          case s: Self => {
+            ch << ArgLoad(0)
+          }
           case n: Not => {
             val labelName = ch.getFreshLabel("not")
             ch << Ldc(0)
@@ -285,6 +287,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
         }
       }
 
+      // mt.vars.foreach(e => generateExprCode(e)) need to add var decls somehow??
       mt.exprs.foreach(e => generateExprCode(e))
       generateExprCode(mt.retExpr)
       mt.retType.getType match {
