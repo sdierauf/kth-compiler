@@ -83,11 +83,18 @@ object CodeGeneration extends Pipeline[Program, Unit] {
         ex match {
           case t : And => {
             val labelName = ch.getFreshLabel("shortCircuitAnd")
+            val endLabel = ch.getFreshLabel("endLabel")
             generateExprCode(t.lhs) // push lhs on stack
             ch << Ldc(0) // push 0 on the stack
             ch << If_ICmpEq(labelName) // if LHS is False (== 0), jump to the labelName, don't eval rhs
             generateExprCode(t.rhs) // whatever is pushed on the stack here is the result of the eval
+            ch << Ldc(0)
+            ch << If_ICmpEq(labelName) // get here, LHS holds, and now cmp RHS
+            ch << Ldc(1) // both expr are true
+            ch << Goto(endLabel)
             ch << Label(labelName) // jumps here if !LHS
+            ch << Ldc(0)
+            ch << Label(endLabel)
           } case t : Or => {
             val labelName = ch.getFreshLabel("shortCircuitOr")
             generateExprCode(t.lhs) // push lhs on stack
@@ -123,34 +130,42 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             ch << IDIV
           } case t : LessThan => {
             val labelName = ch.getFreshLabel("GEQ")
+            val endLabel = ch.getFreshLabel("endLabel")
             generateExprCode(t.lhs)
             generateExprCode(t.rhs)
             ch << If_ICmpGe(labelName) // if LHS >= RHS jump to label
             ch << Ldc(1) // if here it's true LHS < RHS
+            ch << Goto(endLabel)
             ch << Label(labelName)
             ch << Ldc(0)
+            ch << Label(endLabel)
           } case t : Equals => {
             val labelName = ch.getFreshLabel("notEqual")
+            val endLabel = ch.getFreshLabel("endLabel")
             generateExprCode(t.lhs) // counting on true to always push 1 to the stack :/
             generateExprCode(t.rhs)
             ch << If_ICmpNe(labelName)
             ch << Ldc(1)
+            ch << Goto(endLabel)
             ch << Label(labelName)
             ch << Ldc(0)
-
+            ch << Label(endLabel)
           } case b : Block => {
             b.exprs.foreach(e => generateExprCode(e))
           } case ifthen : If => {
             val labelName = ch.getFreshLabel("elseBranch")
+            val endLabel = ch.getFreshLabel("endLabel")
             generateExprCode(ifthen.expr)
             ch << Ldc(0)
             ch << If_ICmpEq(labelName) // if expr evals to false jump to else branch (if it exists)
             generateExprCode(ifthen.thn)
+            ch << Goto(endLabel)
             ch << Label(labelName)
             ifthen.els match {
-              case Some(e) => generateExprCode(e)
+              case Some(e) => generateExprCode(e) //; ch << RETURN
               case _ => // do nothing
             }
+            ch << Label(endLabel)
           } case w : While => {
             val labelName = ch.getFreshLabel("continue")
             val labelNameQuit = ch.getFreshLabel("quit")
@@ -285,10 +300,22 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             ch << Ldc(s.value)
           }
         }
+
+//        ex.getType match {
+//          case TUnit => ch << RETURN
+//          case _ => // do nothing
+//        }
       }
 
       // mt.vars.foreach(e => generateExprCode(e)) need to add var decls somehow??
-      mt.exprs.foreach(e => generateExprCode(e))
+      for (e <- mt.exprs) {
+        generateExprCode(e)
+        e.getType match {
+          case TUnit => {}
+          case _ => ch << POP
+        }
+      }
+
       generateExprCode(mt.retExpr)
       mt.retType.getType match {
         case TInt => ch << IRETURN
@@ -298,6 +325,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
         case TString => ch << ARETURN
         case TIntArray => ch << ARETURN
       }
+
       ch.freeze
     }
 
