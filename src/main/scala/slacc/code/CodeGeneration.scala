@@ -97,11 +97,18 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             ch << Label(endLabel)
           } case t : Or => {
             val labelName = ch.getFreshLabel("shortCircuitOr")
+            val endLabel = ch.getFreshLabel("endLabel")
             generateExprCode(t.lhs) // push lhs on stack
             ch << Ldc(1) // opposite of case above
             ch << If_ICmpEq(labelName)
             generateExprCode(t.rhs)
+            ch << Ldc(1)
+            ch << If_ICmpEq(labelName) // get here LHS does not hold, need to check RHS
+            ch << Ldc(0) // neither are true
+            ch << Goto(endLabel)
             ch << Label(labelName)
+            ch << Ldc(1)
+            ch << Label(endLabel)
           } case t : Plus => {
             if (t.getType == TInt) {
               // Addition - trick is to load left and right hand sides first... i think
@@ -277,11 +284,15 @@ object CodeGeneration extends Pipeline[Program, Unit] {
           }
           case n: Not => {
             val labelName = ch.getFreshLabel("not")
+            val endLabel = ch.getFreshLabel("endLabel")
+            generateExprCode(n.expr)
             ch << Ldc(0)
             ch << If_ICmpEq(labelName)
             ch << Ldc(0)
+            ch << Goto(endLabel)
             ch << Label(labelName)
             ch << Ldc(1)
+            ch << Label(endLabel)
           }
           case i : NewIntArray => {
             generateExprCode(i.size) // push size to onto the stack
