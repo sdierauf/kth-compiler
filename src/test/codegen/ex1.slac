@@ -1,12 +1,68 @@
 class A {
 
-    method baz(v : Int) : Int = {
-        v;
+
+    method lt(value : Int) : Unit = {
+        if (value < 2) {
+            println("This is true");
+        };
+      }
+
+     method eq(v : Int) : Unit = {
+        if (v == 2) {
+            println("Also true");
+        };
+     }
+
+     method and(v : Int) : Unit = {
+        if (!false) {
+            println("T and ~F");
+        };
+     }
+
+     method or(v : Int) : Unit = {
+        if (true || false) {
+            println("T or F");
+        };
+     }
+
+    method baz(v : Int, x : Bool) : String = {
+        if (v < 2) {
+            println("V is less than 2");
+        } else {
+            println("V is bigger than 2");
+        };
+        strOf(v);
+    }
+
+    method foo() : Unit = {
+        println("CAFEBABE");
+    }
+
+    method arrNonsense() : String = {
+        var myInt : String;
+        var myArr : Int[];
+        myArr = new Int[10];
+        myArr[0] = myArr.length;
+        myInt = strOf(myArr[0]);
+        myInt;
+    }
+
+    method twoVars() : Unit = {
+        var a : Int;
+        var b : Int;
+        var c : Int;
+        a = 0;
+        b = 2;
+        c = a + b;
+        println(strOf(c));
     }
 
 }
 
 
 method main() : Unit = {
-    println("Hello world!");
+    1 + 1;
+    println("This is the first line of this method");
+    println("This is the second line");
+    println("And here is the third: Hello world!");
 }

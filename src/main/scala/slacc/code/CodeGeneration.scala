@@ -13,11 +13,6 @@ import scala.collection.mutable.{ListBuffer, Map}
 object CodeGeneration extends Pipeline[Program, Unit] {
 
   var slot : Map[VariableSymbol, Integer] = Map();
-  var slotN : Integer = 0;
-
-  def updateSlot(): Unit = {
-    if (slotN == 3) slotN = 0 else slotN += 1
-  }
 
   def run(ctx: Context)(prog: Program): Unit = {
     import ctx.reporter._
@@ -209,20 +204,18 @@ object CodeGeneration extends Pipeline[Program, Unit] {
 
             sym match {
               case Some(s) => {
-                slot(s) = slotN
+                slot(s) = ch.getFreshVar
+                val n = slot(s)
                 generateExprCode(a.expr) // put it on the stack
                 s.getType match {
                   case TBoolean => {
-                    ch << IStore(slotN)
-                    updateSlot()
+                    ch << IStore(n)
                   }
                   case TInt => {
-                    ch << IStore(slotN)
-                    updateSlot()
+                    ch << IStore(n)
                   }
                   case _ => { // it a reference
-                    ch << AStore(slotN)
-                    updateSlot()
+                    ch << AStore(n)
                   }
                 }
               }
@@ -246,7 +239,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
                         ch << ILoad(n)
                       }
                       case _ => {
-                        ch << ALoad(n)
+                        ch << ALoad(n) // this ok for arrays
                       }
                     }
                   }
@@ -296,7 +289,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
           }
           case i : NewIntArray => {
             generateExprCode(i.size) // push size to onto the stack
-            ch << NewArray(10) // 10 is T_INT
+            ch << NewArray(10) // 10 is T_INT - creates a new int array and pushes it on the stack - but where to store it
           }
           case i : IntLit => {
             ch << Ldc(i.value)
@@ -312,10 +305,6 @@ object CodeGeneration extends Pipeline[Program, Unit] {
           }
         }
 
-//        ex.getType match {
-//          case TUnit => ch << RETURN
-//          case _ => // do nothing
-//        }
       }
 
       // mt.vars.foreach(e => generateExprCode(e)) need to add var decls somehow??
