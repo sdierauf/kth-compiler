@@ -129,7 +129,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
       val methodName = method.id.value
       val symbol = new MethodSymbol(methodName, scope).setPos(method)
 
-      def addMethod(): Unit = {
+      def addMethod(): Unit = { // need to collect all the methods first
         scope.methods += (methodName -> symbol)
         method.args.foreach(arg => collectFormal(arg, symbol))
         method.vars.foreach(v => collectVarDecl(v, symbol))
@@ -141,7 +141,6 @@ object NameAnalysis extends Pipeline[Program, Program] {
         scope.lookupMethod(methodName) match {
           case Some(parentMethod) => {
             if (parentMethod.argList.length != method.args.length) error("Overriding method with unequal number of arguments in " + methodName, method)
-
             else addMethod()
           }
           case None => addMethod()
@@ -215,6 +214,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
         case m :MethodCall => { // TODO: fix everything here p much type wise
           attachExpr(m.obj, symbol)
           attachExpr(m.meth, symbol)
+          println("looking up " + m.obj.getType)
           val classSym = globalScope.lookupClass(m.obj.getType.toString).get
           val methSym = classSym.lookupMethod(m.meth.value).get
           m.args.foreach(ar => attachExpr(ar, symbol))
@@ -234,6 +234,9 @@ object NameAnalysis extends Pipeline[Program, Program] {
         case n: New => {
           attachTypeTree(n.tpe)
           attachExpr(n.tpe, symbol)
+        }
+        case s : Self => {
+          s.setType(new TObject(symbol.classSymbol))
         }
         case _ =>
       }
