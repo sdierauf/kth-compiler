@@ -6,6 +6,8 @@ import slacc.ast.Printer
 import slacc.ast.Trees.{ExprTree, Program, _}
 import slacc.utils.{Context, Pipeline}
 
+import scala.collection.mutable.ListBuffer
+
 object TypeChecking extends Pipeline[Program, Program] {
 
   /** Typechecking does not produce a value, but has the side effect of
@@ -148,13 +150,14 @@ object TypeChecking extends Pipeline[Program, Program] {
       }
 
       val params = e.meth.getSymbol
-      var argListTypes = List[Type]()
+      val argListTypes = ListBuffer[Type]()
       params match {
         case p: MethodSymbol => {
-          p.argList.foreach(a => argListTypes:+a.getType)
+          p.argList.foreach(a => argListTypes += a.getType)
         }
         case _ => TError // should never happen
       }
+
       if (e.args.length != argListTypes.length) TError // is this okay
       for ((arg, t) <- (e.args zip argListTypes)) yield tcExpr(arg, t)
       e.meth.getSymbol.getType
