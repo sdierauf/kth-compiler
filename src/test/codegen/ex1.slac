@@ -1,6 +1,5 @@
 class A {
 
-
     method lt(value : Int) : Unit = {
         if (value < 2) {
             println("This is true");
@@ -56,12 +55,12 @@ class A {
         c = a + b;
         println(strOf(c));
     }
-
 }
 
-
 method main() : Unit = {
-    1 + 1;
+    var myA : A;
+    myA = new A();
+    myA.or(0);
     println("This is the first line of this method");
     println("This is the second line");
     println("And here is the third: Hello world!");

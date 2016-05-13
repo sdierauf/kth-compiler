@@ -252,7 +252,10 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             val acc = new StringBuilder()
             generateExprCode(m.obj) // push receive onto the stack - think this is the right order
             m.args.foreach(a => generateExprCode(a)) // push args onto the stack
-            val methSig = m.args.foreach(a => acc.append(getPrefixForType(a.getType))) + getPrefixForType(m.meth.getSymbol.getType)
+            m.args.foreach(a => acc.append(getPrefixForType(a.getType)))
+            val methSig = "(" + acc.toString + ")" + getPrefixForType(m.meth.getSymbol.getType)
+            ch << Comment("Calling method " + m.meth.value)
+            ch << Comment("With method signature " + methSig)
             ch << InvokeVirtual(m.obj.getType.toString, m.meth.value, methSig)
           }
           case e: ArrayRead => {
@@ -302,6 +305,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             ch << Ldc(0)
           }
           case s : StringLit => {
+            ch << Comment(s.value + " pushed onto the stack")
             ch << Ldc(s.value)
           }
         }
@@ -312,7 +316,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
       for (e <- mt.exprs) {
         generateExprCode(e)
         e.getType match {
-          case TUnit => {}
+          case TUnit => {};
           case _ => ch << POP;
         }
       }
@@ -327,6 +331,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
         case TIntArray => ch << ARETURN
       }
 
+      // ch.print
       ch.freeze
     }
 

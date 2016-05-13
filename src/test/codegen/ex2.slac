@@ -1,0 +1,22 @@
+class A {
+
+     method or(v : Int) : Unit = {
+        if (true || false) {
+            println("T or F");
+        };
+     }
+
+     method or2(v : Int) : Unit = {
+        println("word");
+     }
+
+     method or3(v : String) : Unit = {
+        println(v);
+     }
+}
+
+method main() : Unit = {
+    var myA : A;
+    myA = new A();
+    myA.or3("s");
+}
