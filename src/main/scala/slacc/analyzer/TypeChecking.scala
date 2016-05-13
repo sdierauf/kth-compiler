@@ -178,6 +178,7 @@ object TypeChecking extends Pipeline[Program, Program] {
 
     def tcNewIntArray(e: NewIntArray): Type = {
       tcExpr(e.size, TInt)
+      TIntArray
     }
 
     def tcNew(e: New): Type = {

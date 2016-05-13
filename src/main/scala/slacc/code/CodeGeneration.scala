@@ -169,7 +169,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             ch << Goto(endLabel)
             ch << Label(labelName)
             ifthen.els match {
-              case Some(e) => generateExprCode(e) //; ch << RETURN
+              case Some(e) => generateExprCode(e)
               case _ => // do nothing
             }
             ch << Label(endLabel)
