@@ -331,7 +331,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
         case TIntArray => ch << ARETURN
       }
 
-      // ch.print
+      ch.print
       ch.freeze
     }
 

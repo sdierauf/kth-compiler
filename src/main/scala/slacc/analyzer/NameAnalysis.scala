@@ -214,9 +214,9 @@ object NameAnalysis extends Pipeline[Program, Program] {
         case m :MethodCall => { // TODO: fix everything here p much type wise
           attachExpr(m.obj, symbol)
           attachExpr(m.meth, symbol)
-          println("looking up " + m.obj.getType)
-          val classSym = globalScope.lookupClass(m.obj.getType.toString).get
-          val methSym = classSym.lookupMethod(m.meth.value).get
+          // pretty sure these lines are extraneous vvv
+          //val classSym = globalScope.lookupClass(m.obj.getType.toString).get
+          //val methSym = classSym.lookupMethod(m.meth.value).get
           m.args.foreach(ar => attachExpr(ar, symbol))
         }
         case e: ArrayRead => {
@@ -236,7 +236,9 @@ object NameAnalysis extends Pipeline[Program, Program] {
           attachExpr(n.tpe, symbol)
         }
         case s : Self => {
+          s.setSymbol(symbol.classSymbol)
           s.setType(new TObject(symbol.classSymbol))
+          s.getSymbol.setType(s.getType)
         }
         case _ =>
       }
@@ -354,8 +356,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
         case tpe: Identifier => {
           // look up in list of classes
           globalScope.lookupClass(tpe.value) match {
-
-            case Some(z) => tpe.setSymbol(z); tpe.setType(TObject(z));
+            case Some(z) => tpe.setSymbol(z); tpe.setType(TObject(z)); tpe.getSymbol.setType(TObject(z))
             case None => error("attachTypeTree: No matching class for identifier " + tpe.value, tpe)
           }
         }
