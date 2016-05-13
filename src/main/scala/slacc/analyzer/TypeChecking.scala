@@ -157,7 +157,7 @@ object TypeChecking extends Pipeline[Program, Program] {
       }
       if (e.args.length != argListTypes.length) TError // is this okay
       for ((arg, t) <- (e.args zip argListTypes)) yield tcExpr(arg, t)
-      anyObject
+      e.meth.getSymbol.getType
     }
 
     def tcIntLit(e: IntLit): Type = TInt

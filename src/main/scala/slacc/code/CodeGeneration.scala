@@ -250,6 +250,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
 
           case m :MethodCall => {
             val acc = new StringBuilder()
+            generateExprCode(m.obj) // push receive onto the stack - think this is the right order
             m.args.foreach(a => generateExprCode(a)) // push args onto the stack
             val methSig = m.args.foreach(a => acc.append(getPrefixForType(a.getType))) + getPrefixForType(m.meth.getSymbol.getType)
             ch << InvokeVirtual(m.obj.getType.toString, m.meth.value, methSig)
@@ -307,12 +308,12 @@ object CodeGeneration extends Pipeline[Program, Unit] {
 
       }
 
-      // mt.vars.foreach(e => generateExprCode(e)) need to add var decls somehow??
+      // mt.vars.foreach(e => generateExprCode(e))
       for (e <- mt.exprs) {
         generateExprCode(e)
         e.getType match {
           case TUnit => {}
-          case _ => ch << POP
+          case _ => ch << POP;
         }
       }
 
