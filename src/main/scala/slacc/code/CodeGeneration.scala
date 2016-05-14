@@ -204,7 +204,10 @@ object CodeGeneration extends Pipeline[Program, Unit] {
 
             sym match {
               case Some(s) => {
-                slot(s) = ch.getFreshVar
+                // need to see if it's already been assigned :/
+                if (!slot.contains(s)) {
+                  slot(s) = ch.getFreshVar
+                }
                 val n = slot(s)
                 generateExprCode(a.expr) // put it on the stack
                 s.getType match {
@@ -230,6 +233,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
                     val n = methSym.argList.indexOf(s)
                     ch << ArgLoad(n + 1) // +1 since 0 refers to "this"
                   } else {
+                    ch << Comment("Loading " + i.value)
                     val n = slot(s) // get where it's stored
                     s.getType match {
                       case TBoolean => {

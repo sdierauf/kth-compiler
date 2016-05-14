@@ -1,11 +1,16 @@
 class A {
 
-    method lt() : Unit = {
-        var coins : Int[];
-        var values : Int[];
-        coins = new Int[10];
+    method lt() : String = {
+        var a : String;
+        var b : String;
 
-        values = new Int[coins.length];
+        if (true) {
+            b = "Whatever homie";
+        } else {
+            b = "Cool";
+        };
+
+        b
       }
 }
 
