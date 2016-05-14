@@ -1,9 +1,11 @@
 class A {
 
-    method lt(a : Int) : Unit = {
-        while (!(a == 0)) {
-            println("Yeah");
-        };
+    method lt() : Unit = {
+        var coins : Int[];
+        var values : Int[];
+        coins = new Int[10];
+
+        values = new Int[coins.length];
       }
 }
 

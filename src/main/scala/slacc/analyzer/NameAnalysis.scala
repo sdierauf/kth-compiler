@@ -251,6 +251,9 @@ object NameAnalysis extends Pipeline[Program, Program] {
           s.setType(new TObject(symbol.classSymbol))
           s.getSymbol.setType(s.getType)
         }
+        case n : NewIntArray => {
+          attachExpr(n.size, symbol)
+        }
         case _ =>
       }
 
@@ -294,7 +297,6 @@ object NameAnalysis extends Pipeline[Program, Program] {
 
     def attachClassDecl(classDecl: ClassDecl, scope: GlobalScope): Unit = {
       val className = classDecl.id.value
-      println("attach class decl for " + className)
       scope.lookupClass(className) match {
         case Some(klass) => classDecl.setSymbol(klass); classDecl.id.setSymbol(klass);// classDecl.getSymbol.setType(TObject(classDecl.getSymbol))
         case None => error("attachClassDecl: No matching class for ID " + className, classDecl)
@@ -324,7 +326,6 @@ object NameAnalysis extends Pipeline[Program, Program] {
 
     def attachMethod(method: MethodDecl, scope: ClassSymbol): Unit = {
       val methodName = method.id.value
-      println("attaching method " + methodName)
       val symbol = scope.lookupMethod(methodName)
       symbol match {
         case Some(z) => method.setSymbol(z); method.id.setSymbol(z)
