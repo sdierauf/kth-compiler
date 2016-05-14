@@ -64,7 +64,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
         case TString => "Ljava/lang/String;"
         case TUnit => "V" //void
         case TIntArray => "[I"
-        case TObject(c) => c.getType.toString
+        case TObject(c) => "L" + c.getType.toString + ";"
         case _ => fatal("getPrefixForType: got " + typ)
       }
     }
