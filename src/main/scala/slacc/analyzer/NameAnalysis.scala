@@ -264,8 +264,11 @@ object NameAnalysis extends Pipeline[Program, Program] {
       // it's ok if it has the same name as a class variable...
       val formalName = n.id.value
       val symbol = new VariableSymbol(formalName).setPos(n)
-      if (scope.lookupVar(formalName).isDefined) {
-        error("collectFormal: argList already had a formal with this name!", n)
+      if (scope.lookupVar(formalName).isDefined) { // could be a class member
+        scope.classSymbol.lookupVar(formalName) match {
+          case None => error("collectFormal: argList already had a formal with this name!", n)
+          case Some(s) => scope.params += (formalName -> symbol); scope.argList = scope.argList :+ symbol
+        }
       } else {
         scope.params += (formalName -> symbol)
         scope.argList = scope.argList :+ symbol
