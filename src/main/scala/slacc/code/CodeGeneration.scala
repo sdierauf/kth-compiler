@@ -73,7 +73,8 @@ object CodeGeneration extends Pipeline[Program, Unit] {
     // of the stack frame
     def generateMethodCode(ch: CodeHandler, mt: MethodDecl): Unit = {
       val methSym = mt.getSymbol
-
+      slot.empty // clear out variable associations
+      ch << Comment("Loading method " + mt.id.value + " in class " + mt.getSymbol.classSymbol.name)
       def generateExprCode (ex: ExprTree): Unit = {
         ex match {
           case t : And => {
@@ -200,12 +201,24 @@ object CodeGeneration extends Pipeline[Program, Unit] {
           }
           case a : Assign => {
             // look up the symbol
-            val sym = methSym.lookupVar(a.id.value) orElse methSym.classSymbol.lookupVar(a.id.value)
+            val mvSym = methSym.lookupUnique(a.id.value)
+            val cfSym = methSym.classSymbol.lookupVar(a.id.value)
 
-            sym match {
-              case Some(s) => {
-                // need to see if it's already been assigned :/
+            if (cfSym.isDefined && !mvSym.isDefined) {
+              ch << Comment("Assigning class field " + a.id.value + " in " + methSym.classSymbol.name +
+                " with type " + getPrefixForType(a.id.getType))
+              ch << ArgLoad(0) //  gotta get class on the stack
+              generateExprCode(a.expr)
+              ch << PutField(methSym.classSymbol.name, a.id.value, getPrefixForType(a.id.getType))
+            } else if (mvSym.isDefined) {
+              val s = mvSym.get
+              if (methSym.argList.contains(s)) {
+                val n = methSym.argList.indexOf(s)
+                ch << ArgLoad(n + 1) // +1 since 0 refers to "this"
+              } else {
                 if (!slot.contains(s)) {
+                  // may not be neccessary
+                  ch << Comment("Adding slot for " + a.id.value + " with symbol " + s)
                   slot(s) = ch.getFreshVar
                 }
                 val n = slot(s)
@@ -217,39 +230,47 @@ object CodeGeneration extends Pipeline[Program, Unit] {
                   case TInt => {
                     ch << IStore(n)
                   }
-                  case _ => { // it a reference
+                  case _ => {
+                    // it a reference
                     ch << AStore(n)
                   }
                 }
               }
-              case None => error("Look up failed for id: " + a.id.value)
+            } else {
+              error("Look up failed for " + a.id.value)
             }
           } 
           case i : Identifier => { // what if it's an Arg?
-            val sym = methSym.lookupVar(i.value) orElse methSym.classSymbol.lookupVar(i.value)
-              sym match {
-                case Some(s) => {
-                  if (methSym.argList.contains(s)) {
-                    val n = methSym.argList.indexOf(s)
-                    ch << ArgLoad(n + 1) // +1 since 0 refers to "this"
-                  } else {
-                    ch << Comment("Loading " + i.value)
-                    val n = slot(s) // get where it's stored
-                    s.getType match {
-                      case TBoolean => {
-                        ch << ILoad(n) // do i remove it from the mapping? what if i need it again?
-                      }
-                      case TInt => {
-                        ch << ILoad(n)
-                      }
-                      case _ => {
-                        ch << ALoad(n) // this ok for arrays
-                      }
-                    }
+            val mvSym = methSym.lookupUnique(i.value)
+            val cfSym = methSym.classSymbol.lookupVar(i.value)
+
+            if (cfSym.isDefined && !mvSym.isDefined) {
+              ch << Comment("Getting field " + i.value)
+              ch << ArgLoad(0) // get class on stack
+              ch << GetField(methSym.classSymbol.name, i.value, getPrefixForType(i.getType))
+            } else if (mvSym.isDefined) {
+              val s = mvSym.get
+              if (methSym.argList.contains(s)) {
+                val n = methSym.argList.indexOf(s)
+                ch << ArgLoad(n + 1) // +1 since 0 refers to "this"
+              } else {
+                ch << Comment("Loading " + i.value)
+                val n = slot(s) // get where it's stored
+                s.getType match {
+                  case TBoolean => {
+                    ch << ILoad(n) // do i remove it from the mapping? what if i need it again?
+                  }
+                  case TInt => {
+                    ch << ILoad(n)
+                  }
+                  case _ => {
+                    ch << ALoad(n) // this ok for arrays
                   }
                 }
-                case None => error("Look up failed for id: " + i.value)
               }
+            } else {
+              error("Look up failed for " + i.value)
+            }
             }
 
           case m :MethodCall => {

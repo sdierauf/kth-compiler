@@ -79,6 +79,11 @@ object Symbols {
 
     def lookupVar(n: String): Option[VariableSymbol] = (members.get(n) orElse params.get(n)
       orElse classSymbol.lookupVar(n))
+
+    /**
+      * Just looks in the members and params
+      */
+    def lookupUnique(n: String): Option[VariableSymbol] = (members.get(n) orElse params.get(n))
   }
 
   class VariableSymbol(val name: String) extends Symbol

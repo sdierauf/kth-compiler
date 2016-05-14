@@ -1,13 +1,15 @@
 class A {
+    var lt : Int;
 
     method lt() : String = {
         var a : String;
         var b : String;
 
+        lt = 3;
         if (true) {
             b = "Whatever homie";
         } else {
-            b = "Cool";
+            b = strOf(lt);
         };
 
         b
