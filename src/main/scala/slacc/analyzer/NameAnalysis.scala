@@ -129,7 +129,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
       val methodName = method.id.value
       val symbol = new MethodSymbol(methodName, scope).setPos(method)
 
-      def addMethod(): Unit = { // need to collect all the methods first
+      def addMethod(): Unit = {
         scope.methods += (methodName -> symbol)
         method.args.foreach(arg => collectFormal(arg, symbol))
         method.vars.foreach(v => collectVarDecl(v, symbol))
@@ -153,39 +153,50 @@ object NameAnalysis extends Pipeline[Program, Program] {
 //      case class ArrayLength(arr: ExprTree) extends ExprTree
       expr match {
         // case Trees(lhs : ExprTree, rhs : ExprTree) => idk if something like this would work
-        case t : And => {
+        case t: And => {
           attachExpr(t.lhs, symbol)
           attachExpr(t.rhs, symbol)
-        } case t : Or => {
+        }
+        case t: Or => {
           attachExpr(t.lhs, symbol)
           attachExpr(t.rhs, symbol)
-        } case t : Plus => {
+        }
+        case t: Plus => {
           attachExpr(t.lhs, symbol)
           attachExpr(t.rhs, symbol)
-        } case t : Minus => {
+        }
+        case t: Minus => {
           attachExpr(t.lhs, symbol)
           attachExpr(t.rhs, symbol)
-        } case t : Times => {
+        }
+        case t: Times => {
           attachExpr(t.lhs, symbol)
           attachExpr(t.rhs, symbol)
-        } case t : Div => {
+        }
+        case t: Div => {
           attachExpr(t.lhs, symbol)
           attachExpr(t.rhs, symbol)
-        } case t : LessThan => {
+        }
+        case t: LessThan => {
           attachExpr(t.lhs, symbol)
           attachExpr(t.rhs, symbol)
-        } case t : Equals => {
+        }
+        case t: Equals => {
           attachExpr(t.lhs, symbol)
           attachExpr(t.rhs, symbol)
-        } case b : Block => {
+        }
+        case b: Block => {
           b.exprs.foreach(e => attachExpr(e, symbol))
-        } case ifthen : If => {
+        }
+        case ifthen: If => {
           attachExpr(ifthen.expr, symbol)
           attachExpr(ifthen.thn, symbol)
           ifthen.els match {
             case Some(e3) => attachExpr(e3, symbol)
             case None =>
           }
+        } case n : Not => {
+          attachExpr(n.expr, symbol)
         } case w : While => {
           attachExpr(w.body, symbol)
           attachExpr(w.cond, symbol)
@@ -283,6 +294,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
 
     def attachClassDecl(classDecl: ClassDecl, scope: GlobalScope): Unit = {
       val className = classDecl.id.value
+      println("attach class decl for " + className)
       scope.lookupClass(className) match {
         case Some(klass) => classDecl.setSymbol(klass); classDecl.id.setSymbol(klass);// classDecl.getSymbol.setType(TObject(classDecl.getSymbol))
         case None => error("attachClassDecl: No matching class for ID " + className, classDecl)
@@ -312,6 +324,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
 
     def attachMethod(method: MethodDecl, scope: ClassSymbol): Unit = {
       val methodName = method.id.value
+      println("attaching method " + methodName)
       val symbol = scope.lookupMethod(methodName)
       symbol match {
         case Some(z) => method.setSymbol(z); method.id.setSymbol(z)
@@ -344,7 +357,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
       }
       unusedMethodArgs = Set()
       unusedMethodVars = Set()
-5
+
     }
 
     def attachRetType(tpe: TypeTree, method: MethodSymbol): Unit = {
@@ -371,9 +384,10 @@ object NameAnalysis extends Pipeline[Program, Program] {
 
     def attachFormal(formal: Formal, method: MethodSymbol): Unit = {
       // need to attach the id of the formal AND the type
+      println("attaching formal " + formal.id.value + " in method " + method.name)
       attachTypeTree(formal.tpe)
       method.lookupVar(formal.id.value) match {
-        case Some(s) => formal.setSymbol(s); formal.id.setSymbol(s); ;
+        case Some(s) => formal.setSymbol(s); formal.id.setSymbol(s); formal.id.getSymbol.setType(formal.tpe.getType);
         case None => error("attachFormal: no matching symbol for id: " + formal.id.value, formal)
       }
       formal.getSymbol.setType(formal.tpe.getType)

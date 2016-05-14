@@ -172,7 +172,9 @@ object TypeChecking extends Pipeline[Program, Program] {
     def tcFalse(e: False): Type = TBoolean
 
     def tcIdentifier(e: Identifier): Type = {
-      e.getType
+      println("TCID " + e.value)
+      println("TCID " + e.getSymbol.name)
+      e.getSymbol.getType
     }
 
     def tcSelf(e: Self): Type = {

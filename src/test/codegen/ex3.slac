@@ -1,0 +1,12 @@
+class A {
+
+    method lt(a : Int) : Unit = {
+        while (!(a == 0)) {
+            println("Yeah");
+        };
+      }
+}
+
+method main() : Unit = {
+    println("main");
+}
