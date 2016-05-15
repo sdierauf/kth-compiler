@@ -34,24 +34,27 @@ object CodeGeneration extends Pipeline[Program, Unit] {
 
     /** Writes the proper .class file in a given directory. An empty string for dir is equivalent to "./". */
     def generateClassFile(sourceName: String, ct: ClassDecl, dir: String): Unit = {
-      // TODO: Create code handler, save to files ...
+
       val classFile = ct.parent match {
         case Some(p) => new ClassFile(ct.id.value, Some(p.value))
         case None => new ClassFile(ct.id.value, None)
       }
       // Add fields
       ct.vars.foreach(v => addFieldToClass(classFile, v.id.value, v.tpe.getType))
+
+      classFile.setSourceFile(sourceName)
+      classFile.addDefaultConstructor
+
       // Add methods
       for (m <- ct.methods) {
         val ch = addMethodToClass(classFile, m.id.value, m.getSymbol, m.retType.getType)
         generateMethodCode(ch, m)
       }
-      classFile.setSourceFile(sourceName)
+
       val fileDest = dir match {
         case "" => "./"
         case _ => dir
       }
-      classFile.addDefaultConstructor
       classFile.writeToFile(fileDest + ct.id.value + ".class")
     }
 
@@ -64,7 +67,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
         case TString => "Ljava/lang/String;"
         case TUnit => "V" //void
         case TIntArray => "[I"
-        case TObject(c) => "L" + c.getType.toString + ";"
+        case TObject(c) => "L" + c.name+ ";"
         case _ => fatal("getPrefixForType: got " + typ)
       }
     }
@@ -114,9 +117,17 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             } else if (t.getType == TString) {
               ch << DefaultNew("java/lang/StringBuilder")
               generateExprCode(t.lhs)
-              ch << InvokeVirtual("java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;")
+              if (t.lhs.getType == TString) {
+                ch << InvokeVirtual("java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;")
+              } else { // its an int
+                ch << InvokeVirtual("java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;")
+              }
               generateExprCode(t.rhs)
-              ch << InvokeVirtual("java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;")
+              if (t.rhs.getType == TString) {
+                ch << InvokeVirtual("java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;")
+              } else { // its an int
+                ch << InvokeVirtual("java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;")
+              }
               ch << InvokeVirtual("java/lang/StringBuilder", "toString", "()Ljava/lang/String;")
             }
           } case t : Minus => {
@@ -156,19 +167,18 @@ object CodeGeneration extends Pipeline[Program, Unit] {
           } case b : Block => {
             b.exprs.foreach(e => generateExprCode(e))
           } case ifthen : If => {
-            val labelName = ch.getFreshLabel("elseBranch")
-            val endLabel = ch.getFreshLabel("endLabel")
+            val then = ch.getFreshLabel("thenBranch")
+            val els = ch.getFreshLabel("elseBranch")
+            val exit = ch.getFreshLabel("exitBranch")
             generateExprCode(ifthen.expr)
-            ch << Ldc(0)
-            ch << If_ICmpEq(labelName) // if expr evals to false jump to else branch (if it exists)
+            ch << IfEq(if (ifthen.els.isDefined) els else exit)
             generateExprCode(ifthen.thn)
-            ch << Goto(endLabel)
-            ch << Label(labelName)
-            ifthen.els match {
-              case Some(e) => generateExprCode(e)
-              case _ => // do nothing
+            ch << Goto(exit)
+            if (ifthen.els.isDefined) {
+              ch << Label(els)
+              generateExprCode(ifthen.els.get)
             }
-            ch << Label(endLabel)
+            ch << Label(exit)
           } case w : While => {
             val labelName = ch.getFreshLabel("continue")
             val labelNameQuit = ch.getFreshLabel("quit")
@@ -280,7 +290,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             m.args.foreach(a => acc.append(getPrefixForType(a.getType)))
             val methSig = "(" + acc.toString + ")" + getPrefixForType(m.meth.getSymbol.getType)
             ch << Comment("Calling method " + m.meth.value)
-            ch << Comment("With method signature " + methSig)
+            ch << Comment("With method signature " + methSig + " on object " + m.obj.getType.toString)
             ch << InvokeVirtual(m.obj.getType.toString, m.meth.value, methSig)
           }
           case e: ArrayRead => {
@@ -299,6 +309,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             ch << IASTORE
           }
           case n: New => {
+            ch << Comment("New " + n.tpe.value)
             ch << DefaultNew(n.tpe.value)
           }
           case s: Self => {
@@ -376,6 +387,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
 
     val mainClass = new ClassFile("Main", None)
     // Now do the main method
+    mainClass.addDefaultConstructor
     val mainHandler = mainClass.addMainMethod.codeHandler
     generateMethodCode(mainHandler, prog.main.main)
     mainClass.writeToFile("Main.class") // TODO: how tf to handle directory
