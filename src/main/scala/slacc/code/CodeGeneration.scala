@@ -287,7 +287,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             val acc = new StringBuilder()
             generateExprCode(m.obj) // push receive onto the stack - think this is the right order
             m.args.foreach(a => generateExprCode(a)) // push args onto the stack
-            m.args.foreach(a => acc.append(getPrefixForType(a.getType)))
+            m.meth.getSymbol.asInstanceOf[MethodSymbol].argList.foreach(a => acc.append(getPrefixForType(a.getType)))
             val methSig = "(" + acc.toString + ")" + getPrefixForType(m.meth.getSymbol.getType)
             ch << Comment("Calling method " + m.meth.value)
             ch << Comment("With method signature " + methSig + " on object " + m.obj.getType.toString)
