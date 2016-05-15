@@ -226,7 +226,8 @@ object Main {
       val pipeline = Lexer andThen Parser andThen NameAnalysis andThen TypeChecking andThen CodeGeneration
       val ast = pipeline.run(ctx)(ctx.files.head)
     } else {
-      ???
+      val pipeline = Lexer andThen Parser andThen NameAnalysis andThen TypeChecking andThen CodeGeneration
+      val ast = pipeline.run(ctx)(ctx.files.head)
     }
   }
 }

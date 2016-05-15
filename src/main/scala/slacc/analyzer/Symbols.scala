@@ -9,7 +9,7 @@ object Symbols {
     private var _sym: Option[S] = None
 
     def setSymbol(sym: S): this.type = {
-      println("setSymbol: attaching " + sym.name)
+      // println("setSymbol: attaching " + sym.name)
       _sym = Some(sym)
       this
     }
@@ -40,7 +40,7 @@ object Symbols {
     var classes = Map[String, ClassSymbol]()
 
     def lookupClass(n: String): Option[ClassSymbol] = {
-//      println(classes)
+     // println(classes)
       classes.get(n)
     }
   }
@@ -53,12 +53,8 @@ object Symbols {
     def lookupMethod(n: String): Option[MethodSymbol] = {
       var ret = methods.get(n)
       if (ret.isEmpty && parent.isDefined) {
-        println("class " + name + " looking for " + n + " in parent " + parent.get.name)
+        // println("class " + name + " looking for " + n + " in parent " + parent.get.name)
         ret = parent.get.lookupMethod(n)
-      }
-      ret match {
-        case Some(m) => println("found " + m.name + " with id " + m.id)
-        case None => println("didnt find " + n)
       }
       ret
     }

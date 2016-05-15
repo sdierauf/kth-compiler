@@ -70,7 +70,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
 
     def collectClassDecl(klass: ClassDecl, scope: GlobalScope): Unit = {
       val className = klass.id.value
-      println("collecting " + className)
+      // println("collecting " + className)
       if (collectedClasses.contains(className)) {
         return
       } else {
@@ -388,7 +388,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
 
     def attachFormal(formal: Formal, method: MethodSymbol): Unit = {
       // need to attach the id of the formal AND the type
-      println("attaching formal " + formal.id.value + " in method " + method.name)
+      // println("attaching formal " + formal.id.value + " in method " + method.name)
       attachTypeTree(formal.tpe)
       method.lookupVar(formal.id.value) match {
         case Some(s) => formal.setSymbol(s); formal.id.setSymbol(s); formal.id.getSymbol.setType(formal.tpe.getType);
@@ -400,7 +400,7 @@ object NameAnalysis extends Pipeline[Program, Program] {
     def attachVariable(v: VarDecl, scope: Symbol): Unit = {
 
       val varName = v.id.value
-      println("attaching " + v.id.value + " with type " + v.tpe)
+      // println("attaching " + v.id.value + " with type " + v.tpe)
       attachTypeTree(v.tpe)
       scope match {
         case s: ClassSymbol => {
@@ -446,14 +446,14 @@ object NameAnalysis extends Pipeline[Program, Program] {
 
 
 
-    prog.classes.foreach(classDecl => println("class " + classDecl.id.value + "#" + classDecl.getSymbol.id))
+    // prog.classes.foreach(classDecl => println("class " + classDecl.id.value + "#" + classDecl.getSymbol.id))
 
     // (Step 3:) Print tree with symbol ids for debugging
 //    if (ctx.doSymbolIds) {
-//      println("doing symbolids 11!!!!")
+     // println("doing symbolids 11!!!!")
 //      //print tree with symbol ids
 //      val out = Printer.applyWithSymbolIds(prog)
-//      println(out)
+     // println(out)
 //    }
     // Make sure you check all constraints
 

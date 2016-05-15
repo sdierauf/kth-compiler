@@ -16,7 +16,7 @@ object TypeChecking extends Pipeline[Program, Program] {
     import ctx.reporter._
 
     def tcExpr(expr: ExprTree, expected: Type*): Type = {
-      println("type checkingingn11")
+      // println("type checkingingn11")
       val tpe = expr match {
         case e: And => tcAnd(e)
         case e: Or => tcOr(e)
@@ -247,7 +247,7 @@ object TypeChecking extends Pipeline[Program, Program] {
 //    tcExpr(prog.main.main.retExpr)
 
     if (ctx.doSymbolIds) {
-      println("doing symbolids 11!!!!")
+      // println("doing symbolids 11!!!!")
       //print tree with symbol ids
       val out = Printer.applyWithSymbolIds(prog)
       println(out)
