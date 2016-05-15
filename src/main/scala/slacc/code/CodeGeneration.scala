@@ -224,7 +224,20 @@ object CodeGeneration extends Pipeline[Program, Unit] {
               val s = mvSym.get
               if (methSym.argList.contains(s)) {
                 val n = methSym.argList.indexOf(s)
+                ch << Comment("Assigning " + s.name)
                 ch << ArgLoad(n + 1) // +1 since 0 refers to "this"
+                s.getType match {
+                  case TBoolean => {
+                    ch << IStore(n)
+                  }
+                  case TInt => {
+                    ch << IStore(n)
+                  }
+                  case _ => {
+                    // it a reference
+                    ch << AStore(n)
+                  }
+                }
               } else {
                 if (!slot.contains(s)) {
                   // may not be neccessary
