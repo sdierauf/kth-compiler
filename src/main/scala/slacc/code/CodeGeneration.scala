@@ -167,7 +167,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
           } case b : Block => {
             b.exprs.foreach(e => generateExprCode(e))
           } case ifthen : If => {
-            val then = ch.getFreshLabel("thenBranch")
+            val thn = ch.getFreshLabel("thenBranch")
             val els = ch.getFreshLabel("elseBranch")
             val exit = ch.getFreshLabel("exitBranch")
             generateExprCode(ifthen.expr)
@@ -206,6 +206,9 @@ object CodeGeneration extends Pipeline[Program, Unit] {
                 generateExprCode(s.expr) // load arg onto stack
                 ch << InvokeVirtual("java/lang/StringBuilder", "append", "(Z)Ljava/lang/StringBuilder;")
                 ch << InvokeVirtual("java/lang/StringBuilder", "toString", "()Ljava/lang/String;")
+              }
+              case _ => {
+
               }
             }
           }
@@ -378,6 +381,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
         case TObject(cs) => ch << ARETURN // return a reference
         case TString => ch << ARETURN
         case TIntArray => ch << ARETURN
+        case _ => 
       }
 
       ch.print
