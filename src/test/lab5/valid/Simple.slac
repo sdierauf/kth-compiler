@@ -1,0 +1,10 @@
+class Fact {
+    method computeFactorial(num : Int) : Int = {
+        num
+    }
+}
+
+method main() : Unit = {
+    println(strOf("f" + "oo" == "fo" + "o"));
+    println(strOf(new Fact() == new Fact()))
+}
