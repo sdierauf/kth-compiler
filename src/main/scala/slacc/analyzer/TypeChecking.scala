@@ -240,9 +240,31 @@ object TypeChecking extends Pipeline[Program, Program] {
       TString
     }
 
+
+
+    def tcMethodDecl(m : MethodDecl): Unit = {
+      val parent = m.getSymbol.classSymbol.parent
+      val parentMethod = parent match {
+        case Some(p) => p.lookupMethod(m.id.value) match {
+          case Some(parentMethod) => {
+            val listA : List[Type] = parentMethod.argList.map(a => a.getType)
+            val listB : List[Type] = m.args.map(a => a.tpe.getType)
+            for ((a, b) <- listA zip listB) yield {
+              if (!a.isSubTypeOf(b)) error("Overriding method with wrong paramter types", m)
+            }
+          }
+          case None =>
+        }
+        case None =>
+      }
+    }
+
     prog.classes.foreach(klass =>
-      klass.methods.foreach(m => {(m.exprs :+ m.retExpr).foreach(ex => tcExpr(ex));})
+      klass.methods.foreach(m => {tcMethodDecl(m); (m.exprs :+ m.retExpr).foreach(ex => tcExpr(ex));})
     )
+
+
+
     (prog.main.main.exprs :+ prog.main.main.retExpr).foreach(ex => tcExpr(ex))
 //    tcExpr(prog.main.main.retExpr)
 

@@ -1,19 +1,16 @@
 class A {
     var lt : Int;
 
-    method lt() : String = {
-        var a : String;
-        var b : String;
+    method swap(a : Bool) : Int = {
+        0
+    }
+}
 
-        lt = 3;
-        if (true) {
-            b = "Whatever homie";
-        } else {
-            b = strOf(lt);
-        };
+class B <: A {
 
-        b
-      }
+   method swap(a : Int) : Int = {
+        0
+   }
 }
 
 method main() : Unit = {
