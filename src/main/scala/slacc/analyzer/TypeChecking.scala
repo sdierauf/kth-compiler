@@ -1,6 +1,6 @@
 package slacc.analyzer
 
-import slacc.analyzer.Symbols.{ClassSymbol, MethodSymbol}
+import slacc.analyzer.Symbols.{ClassSymbol, MethodSymbol, VariableSymbol}
 import slacc.analyzer.Types._
 import slacc.ast.Printer
 import slacc.ast.Trees.{ExprTree, Program, _}
@@ -247,10 +247,14 @@ object TypeChecking extends Pipeline[Program, Program] {
       val parentMethod = parent match {
         case Some(p) => p.lookupMethod(m.id.value) match {
           case Some(parentMethod) => {
-            val listA : List[Type] = parentMethod.argList.map(a => a.getType)
-            val listB : List[Type] = m.args.map(a => a.tpe.getType)
+            val listA : List[VariableSymbol] = parentMethod.argList.map(a => a)
+            val listB : List[Formal] = m.args.map(a => a)
             for ((a, b) <- listA zip listB) yield {
-              if (!a.isSubTypeOf(b)) error("Overriding method with wrong paramter types", m)
+              if (!a.getType.isSubTypeOf(b.tpe.getType)) {
+                error("Overriding method " + m.id.value + " with wrong paramter types...", b)
+                error("...Method arg...", a);
+                error("...is not a subtype of ", b);
+              }
             }
           }
           case None =>
@@ -259,9 +263,13 @@ object TypeChecking extends Pipeline[Program, Program] {
       }
     }
 
-    prog.classes.foreach(klass =>
-      klass.methods.foreach(m => {tcMethodDecl(m); (m.exprs :+ m.retExpr).foreach(ex => tcExpr(ex));})
-    )
+    prog.classes.foreach(klass => {
+      println(klass.parent)
+      klass.methods.foreach(m => {
+        tcMethodDecl(m)
+        (m.exprs :+ m.retExpr).foreach(ex => tcExpr(ex))
+      })
+    })
 
 
 

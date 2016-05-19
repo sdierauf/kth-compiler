@@ -1,0 +1,26 @@
+class C {
+
+}
+
+class D <: C {
+
+}
+
+class A {
+    var lt : Int;
+
+    method swap(a : D) : Int = {
+        0
+    }
+}
+
+class B <: A {
+
+   method swap(a : C) : Int = {
+        0
+   }
+}
+
+method main() : Unit = {
+    println("main");
+}

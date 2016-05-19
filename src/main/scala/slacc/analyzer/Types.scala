@@ -67,20 +67,26 @@ object Types {
   }
 
   case class TObject(classSymbol: ClassSymbol) extends Type {
-    override def isSubTypeOf(tpe: Type): Boolean = {
-      val thisType = classSymbol.getType
-      tpe match {
-        case thisType => true
-        case _ => {
-          val parent = classSymbol.parent
-          if (parent.isDefined) {
-            // check parent recursively
-            new TObject(parent.get).isSubTypeOf(tpe)
+
+    override def isSubTypeOf(tpe: Type): Boolean = tpe match {
+      case obj: TObject => {
+        obj.classSymbol.name match {
+          case "Object" => true
+          case classSymbol.name => true
+          case _ => {
+            var isSubtype: Boolean = false;
+            var parent: Option[ClassSymbol] = classSymbol.parent
+            if (parent.isDefined) {
+              parent.get.getType.isSubTypeOf(tpe)
+            } else {
+              false
+            }
           }
-          false
         }
       }
+      case _ => false
     }
+
     override def toString = classSymbol.name
   }
 
