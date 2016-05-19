@@ -75,7 +75,7 @@ object Types {
           case classSymbol.name => true
           case _ => {
             var isSubtype: Boolean = false;
-            var parent: Option[ClassSymbol] = classSymbol.parent
+            val parent: Option[ClassSymbol] = classSymbol.parent
             if (parent.isDefined) {
               parent.get.getType.isSubTypeOf(tpe)
             } else {
