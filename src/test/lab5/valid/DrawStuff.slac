@@ -24,7 +24,6 @@ class Drawable {
 		while(y < resY) {
 			while(x < resX) {
 				depth = self.computePixel(x, y);
-				
 				if(depth < 1) {symb = " "};
 				if(depth == 1) {symb = "."};
 				if(depth == 2) {symb = "o"};
@@ -70,25 +69,25 @@ class ConcentricCircles <: Drawable {
 		var iter: Int;
 		var maxIter: Int;
 		var xTemp: Int;
-		
+
 		resX = 65;
 		resY = 30;
-		
+
 		// image scaling & centering
 		x0 = x*2500 - 15000;
 		y0 = y*4500 - 15000;
-		
+
 		x=0; y=0;
-		iter = 0-1; 
+		iter = 0-1;
 		maxIter = 100;
-		
+
 		while( (x*x + y*y < 100000000) && iter<maxIter) {
-			xTemp = x0 + x;
-			y = y0 + y;
-			x = xTemp;
-			iter = iter + 1
-		};
-		
+       			xTemp = x0 + x;
+       			y = y0 + y;
+       			x = xTemp;
+       			iter = iter + 1
+        };
+
 		iter
 	}
 	

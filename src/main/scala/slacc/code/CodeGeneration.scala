@@ -78,6 +78,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
     def generateMethodCode(ch: CodeHandler, mt: MethodDecl): Unit = {
       val methSym = mt.getSymbol
       slot.empty // clear out variable associations
+      mt.vars.foreach(v => slot(v.getSymbol) = ch.getFreshVar)
       ch << Comment("Loading method " + mt.id.value + " in class " + mt.getSymbol.classSymbol.name)
       def generateExprCode (ex: ExprTree): Unit = {
         ex match {
@@ -166,7 +167,14 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             ch << Ldc(0)
             ch << Label(endLabel)
           } case b : Block => {
-            b.exprs.foreach(e => generateExprCode(e))
+            for (e <- b.exprs) {
+              generateExprCode(e)
+              e.getType match {
+                case TUnit => {}
+                case _ => ch << POP
+              }
+            }
+            //b.exprs.foreach(e => generateExprCode(e))
           } case ifthen : If => {
             val thn = ch.getFreshLabel("thenBranch")
             val els = ch.getFreshLabel("elseBranch")
@@ -191,6 +199,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             ch << Goto(labelName) // do the body and go back to continue label
             ch << Label(labelNameQuit)
           } case p : Println => {
+            ch << Comment("Printing " + p.expr)
             ch << GetStatic("java/lang/System", "out", "Ljava/io/PrintStream;")
             generateExprCode(p.expr)
             ch << InvokeVirtual("java/io/PrintStream", "println", "(Ljava/lang/String;)V")
@@ -229,17 +238,18 @@ object CodeGeneration extends Pipeline[Program, Unit] {
               if (methSym.argList.contains(s)) {
                 val n = methSym.argList.indexOf(s)
                 ch << Comment("Assigning " + s.name)
-                ch << ArgLoad(n + 1) // +1 since 0 refers to "this"
+                generateExprCode(a.expr)
+                // ch << ArgLoad(n + 1) // +1 since 0 refers to "this"
                 s.getType match {
                   case TBoolean => {
-                    ch << IStore(n)
+                    ch << IStore(n + 1)
                   }
                   case TInt => {
-                    ch << IStore(n)
+                    ch << IStore(n + 1)
                   }
                   case _ => {
                     // it a reference
-                    ch << AStore(n)
+                    ch << AStore(n + 1)
                   }
                 }
               } else {
@@ -259,6 +269,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
                   }
                   case _ => {
                     // it a reference
+                    ch << Comment("Storing reference at " + n)
                     ch << AStore(n)
                   }
                 }
@@ -408,7 +419,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
     mainClass.addDefaultConstructor
     val mainHandler = mainClass.addMainMethod.codeHandler
     generateMethodCode(mainHandler, prog.main.main)
-    mainClass.writeToFile("Main.class") // TODO: how tf to handle directory
+    mainClass.writeToFile("Main.class")
   }
 
 }

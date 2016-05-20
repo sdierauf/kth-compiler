@@ -1,18 +1,9 @@
-class A {
-    var lt : Int;
 
-    method swap(a : Bool) : Int = {
-        0
-    }
-}
-
-class B <: A {
-
-   method swap(a : Int) : Int = {
-        0
-   }
-}
 
 method main() : Unit = {
-    println("main");
+   var s : String;
+   if (1 < 2) {s = "2"};
+   if (2 < 1) {s = "3"};
+   if (2 == 1) {s = "4"} else { s =
+   println(s)
 }
