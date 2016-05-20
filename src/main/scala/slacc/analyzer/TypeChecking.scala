@@ -255,13 +255,16 @@ object TypeChecking extends Pipeline[Program, Program] {
           }
         }
       })
+      val actualRetType = m.retExpr.getType
+      val expectedRetType = m.retType.getType
+      if (!actualRetType.isSubTypeOf(expectedRetType)) error("Type Error: Expected " + expectedRetType + " found " + actualRetType, m.retExpr)
     }
 
     prog.classes.foreach(klass => {
       println(klass.parent)
       klass.methods.foreach(m => {
-        tcMethodDecl(m)
         (m.exprs :+ m.retExpr).foreach(ex => tcExpr(ex))
+        tcMethodDecl(m)
       })
     })
 
