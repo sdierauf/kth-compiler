@@ -258,7 +258,6 @@ object TypeChecking extends Pipeline[Program, Program] {
     }
 
     prog.classes.foreach(klass => {
-      println(klass.parent)
       klass.methods.foreach(m => {
         tcMethodDecl(m)
         (m.exprs :+ m.retExpr).foreach(ex => tcExpr(ex))
