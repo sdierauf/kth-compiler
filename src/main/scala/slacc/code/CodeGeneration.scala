@@ -160,7 +160,11 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             val endLabel = ch.getFreshLabel("endLabel")
             generateExprCode(t.lhs) // counting on true to always push 1 to the stack :/
             generateExprCode(t.rhs)
-            ch << If_ICmpNe(labelName)
+            t.lhs.getType match {
+              case TInt => ch << If_ICmpNe(labelName)
+              case TBoolean => ch << If_ICmpNe(labelName)
+              case _ => ch << If_ACmpNe(labelName)
+            }
             ch << Ldc(1)
             ch << Goto(endLabel)
             ch << Label(labelName)

@@ -5,6 +5,6 @@ class Fact {
 }
 
 method main() : Unit = {
-    println(strOf("f" + "oo" == "fo" + "o"));
+    println(strOf("foo" == "foo"));
     println(strOf(new Fact() == new Fact()))
 }
