@@ -169,10 +169,10 @@ object CodeGeneration extends Pipeline[Program, Unit] {
           } case b : Block => {
             for (e <- b.exprs) {
               generateExprCode(e)
-              e.getType match {
-                case TUnit => {}
-                case _ => ch << POP
-              }
+//              e.getType match {
+//                case TUnit => {}
+//                case _ => ch << POP
+//              }
             }
             //b.exprs.foreach(e => generateExprCode(e))
           } case ifthen : If => {
