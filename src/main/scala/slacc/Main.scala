@@ -8,6 +8,8 @@ import scala.collection.JavaConversions._
 import lexer._
 import ast._
 import slacc.analyzer.{NameAnalysis, TypeChecking}
+import scala.io.StdIn.readLine
+import sys.process._
 
 import scala.io.Source
 
@@ -71,6 +73,10 @@ object Main {
 
       case "--symid" :: args =>
         ctx = ctx.copy(doSymbolIds = true)
+        processOption(args)
+
+      case "--repl" :: args =>
+        ctx = ctx.copy(doRepl = true)
         processOption(args)
 
       case f :: args =>
@@ -225,6 +231,31 @@ object Main {
     } else if (ctx.doSymbolIds) {
       val pipeline = Lexer andThen Parser andThen NameAnalysis andThen TypeChecking
       val ast = pipeline.run(ctx)(ctx.files.head)
+    } else if (ctx.doRepl) {
+      val initial = "method main(): Unit = { # \nprintln(\"\");}"
+      var readInput: String = ""
+      var rawInput = readLine()
+      val pipeline = Lexer andThen Parser andThen NameAnalysis andThen TypeChecking andThen CodeGeneration
+      while (!rawInput.equals("exit")) {
+        if (rawInput.equals("clear")) {
+          readInput = initial
+        } else {
+          readInput += rawInput
+        }
+
+
+        val f = new File("hello.txt")
+        val pw = new PrintWriter(f)
+        pw.write(initial.replace("#", readInput))
+        pw.close
+        pipeline.run(ctx)(f)
+        val res = "java Main" !!;
+        println(res)
+
+
+        rawInput = readLine()
+      }
+
     } else {
       val pipeline = Lexer andThen Parser andThen NameAnalysis andThen TypeChecking andThen CodeGeneration
       val ast = pipeline.run(ctx)(ctx.files.head)

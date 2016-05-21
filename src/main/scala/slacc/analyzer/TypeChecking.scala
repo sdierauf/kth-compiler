@@ -158,9 +158,13 @@ object TypeChecking extends Pipeline[Program, Program] {
         case _ => TError // should never happen
       }
 
-      if (e.args.length != argListTypes.length) TError // is this okay
-      for ((arg, t) <- (e.args zip argListTypes)) yield tcExpr(arg, t)
-      e.meth.getSymbol.getType
+      if (e.args.length != argListTypes.length) {
+        error("method call to " + e.meth.value + " args werent the same length", e.meth)
+        TError
+      } else {
+        for ((arg, t) <- (e.args zip argListTypes)) yield tcExpr(arg, t)
+        e.meth.getSymbol.getType
+      }
     }
 
     def tcIntLit(e: IntLit): Type = TInt

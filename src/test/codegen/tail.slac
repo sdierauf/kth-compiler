@@ -8,11 +8,11 @@ class A {
         };
     }
 
-    method sum(i: Int) : Int =  {
+    method sum(i: Int, acc: Int) : Int =  {
         if (i == 0) {
-            i
+            acc
         } else {
-            self.sum(i - 1) + i
+            self.sum(i - 1, acc + i)
         }
     }
 }
@@ -30,5 +30,5 @@ method main() : Unit = {
     println(strOf(p));
     temp = new A();
     // temp.recursive(10000);
-    // println(strOf(temp.sum(10)));
+    println(strOf(temp.sum(10)));
 }
