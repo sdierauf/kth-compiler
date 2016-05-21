@@ -171,13 +171,14 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             ch << Ldc(0)
             ch << Label(endLabel)
           } case b : Block => {
-            for (e <- b.exprs) {
+            for (e <- b.exprs.dropRight(1)) {
               generateExprCode(e)
-//              e.getType match {
-//                case TUnit => {}
-//                case _ => ch << POP
-//              }
+              e.getType match {
+                case TUnit =>
+                case _ => ch << POP
+              }
             }
+            generateExprCode(b.exprs.last)
             //b.exprs.foreach(e => generateExprCode(e))
           } case ifthen : If => {
             val thn = ch.getFreshLabel("thenBranch")

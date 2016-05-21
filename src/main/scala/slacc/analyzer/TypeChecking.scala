@@ -193,8 +193,11 @@ object TypeChecking extends Pipeline[Program, Program] {
     }
 
     def tcBlock(e: Block): Type = {
-      e.exprs.foreach(ex => tcExpr(ex))
-      TUnit // is this the type of a block
+      if (e.exprs.isEmpty) {
+        TUnit
+      } else {
+        e.exprs.map(ex => tcExpr(ex)).last
+      }
     }
 
     def tcIf(e: If): Type = {
@@ -203,8 +206,11 @@ object TypeChecking extends Pipeline[Program, Program] {
       e.els match {
         case Some(els) => {
           val elsBranch = tcExpr(els)
-          if (thnBranch == elsBranch) thnBranch
-          else TError
+          if (thnBranch == elsBranch) {
+            thnBranch
+          } else {
+            TError
+          }
         } case None => thnBranch
       }
     }
