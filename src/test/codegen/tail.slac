@@ -27,8 +27,8 @@ method main() : Unit = {
         m = m - 2;
         m
     };
-    println(strOf(p));
+    //println(strOf(p));
     temp = new A();
-    temp.recursive(10);
-    println(strOf(temp.sum(10, 0)));
+    temp.recursive(10000);
+    println(strOf(temp.sum(6000, 0)));
 }

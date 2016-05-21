@@ -78,6 +78,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
     // a mapping from variable symbols to positions in the local variables
     // of the stack frame
     def generateMethodCode(ch: CodeHandler, mt: MethodDecl): Unit = {
+      val methodLabelForTailRecursion = ch.getFreshLabel("method_start")
       var tailRecMethodCalls: Set[MethodCall] = Set()
       def trWalk(e : ExprTree): Unit = e match {
         case ex : If => {
@@ -96,6 +97,10 @@ object CodeGeneration extends Pipeline[Program, Unit] {
         case _ => Unit
       }
       trWalk(mt.retExpr)
+      if (!tailRecMethodCalls.isEmpty){
+        ch << Label(methodLabelForTailRecursion);
+      }
+
       val methSym = mt.getSymbol
       slot.empty // clear out variable associations
       mt.vars.foreach(v => slot(v.getSymbol) = ch.getFreshVar)
@@ -338,16 +343,32 @@ object CodeGeneration extends Pipeline[Program, Unit] {
 
           case m :MethodCall => {
             val acc = new StringBuilder()
-            generateExprCode(m.obj) // push receive onto the stack - think this is the right order
-            m.args.foreach(a => generateExprCode(a)) // push args onto the stack
-            m.meth.getSymbol.asInstanceOf[MethodSymbol].argList.foreach(a => acc.append(getPrefixForType(a.getType)))
-            val methSig = "(" + acc.toString + ")" + getPrefixForType(m.meth.getSymbol.getType)
-            ch << Comment("Calling method " + m.meth.value)
-            ch << Comment("With method signature " + methSig + " on object " + m.obj.getType.toString)
-            if (tailRecMethodCalls(m)) {
+
+            if (tailRecMethodCalls(m) && m.obj.getType == methSym.classSymbol.getType) {
               info("we should rewrite this to a tail recursive call!!", m.meth)
-              
+              for (i <- 0 until m.args.length) {
+                val s = m.args(i)
+                generateExprCode(s)
+                s.getType match {
+                  case TBoolean => {
+                    ch << IStore(i + 1)
+                  }
+                  case TInt => {
+                    ch << IStore(i + 1)
+                  }
+                  case _ => {
+                    // it a reference
+                    ch << AStore(i + 1)
+                  }
+                }
+              }
+              ch << Goto(methodLabelForTailRecursion)
+
             } else {
+              generateExprCode(m.obj) // push receive onto the stack - think this is the right order
+              m.args.foreach(a => generateExprCode(a)) // push args onto the stack
+              m.meth.getSymbol.asInstanceOf[MethodSymbol].argList.foreach(a => acc.append(getPrefixForType(a.getType)))
+              val methSig = "(" + acc.toString + ")" + getPrefixForType(m.meth.getSymbol.getType)
               ch << InvokeVirtual(m.obj.getType.toString, m.meth.value, methSig)
             }
           }
