@@ -14,6 +14,7 @@ import scala.collection.mutable
 object CodeGeneration extends Pipeline[Program, Unit] {
 
   var slot : mutable.Map[VariableSymbol, Integer] = mutable.Map()
+  var tailRecursiveMethods = mutable.Set()
 
   def run(ctx: Context)(prog: Program): Unit = {
     import ctx.reporter._
@@ -21,6 +22,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
     def addFieldToClass(cls:ClassFile, name: String, tpe:Type): Unit = {
       cls.addField(getPrefixForType(tpe), name)
     }
+
 
 
     def addMethodToClass(cls: ClassFile, name: String, sym: MethodSymbol, returnType: Type): CodeHandler = {
@@ -76,6 +78,24 @@ object CodeGeneration extends Pipeline[Program, Unit] {
     // a mapping from variable symbols to positions in the local variables
     // of the stack frame
     def generateMethodCode(ch: CodeHandler, mt: MethodDecl): Unit = {
+      var tailRecMethodCalls: Set[MethodCall] = Set()
+      def trWalk(e : ExprTree): Unit = e match {
+        case ex : If => {
+          trWalk(ex.thn); ex.els.foreach(els => trWalk(els))
+        }
+        case ex : Block => trWalk(ex.exprs.last)
+        case ex : MethodCall => {
+          // if same method call
+          // add it to tailRecMthodCalls
+          info("looking at " + ex.meth.value)
+          if (ex.meth.value == mt.id.value) {
+            info(ex.meth.value + " is a tail recursive call ", ex)
+            tailRecMethodCalls = tailRecMethodCalls + ex
+          }
+        }
+        case _ => Unit
+      }
+      trWalk(mt.retExpr)
       val methSym = mt.getSymbol
       slot.empty // clear out variable associations
       mt.vars.foreach(v => slot(v.getSymbol) = ch.getFreshVar)
@@ -324,7 +344,12 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             val methSig = "(" + acc.toString + ")" + getPrefixForType(m.meth.getSymbol.getType)
             ch << Comment("Calling method " + m.meth.value)
             ch << Comment("With method signature " + methSig + " on object " + m.obj.getType.toString)
-            ch << InvokeVirtual(m.obj.getType.toString, m.meth.value, methSig)
+            if (tailRecMethodCalls(m)) {
+              info("we should rewrite this to a tail recursive call!!", m.meth)
+              
+            } else {
+              ch << InvokeVirtual(m.obj.getType.toString, m.meth.value, methSig)
+            }
           }
           case e: ArrayRead => {
             generateExprCode(e.arr)
