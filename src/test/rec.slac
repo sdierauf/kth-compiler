@@ -1,0 +1,35 @@
+class A {
+  var value: Int;
+  method poop(acc: Int): Int = {
+    value = 8008;
+    if (acc == 0) {
+        value;
+    } else {
+        self.poop(acc - 1);
+    }
+  }
+}
+
+class B <: A {
+  method poop(acc: Int): Int = {
+    value = 1134;
+    if (acc == 0) {
+        value;
+    } else {
+        self.poop(acc - 1);
+    }
+  }
+}
+
+method main(): Unit = {
+  var s : A;
+  var j : B;
+  var sssub: A;
+
+  s = new A();
+  j = new B();
+  sssub = new B();
+  println(strOf(s.poop(10)));
+  println(strOf(j.poop(10)));
+  println(strOf(sssub.poop(10)));
+}

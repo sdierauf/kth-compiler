@@ -97,7 +97,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
         case _ => Unit
       }
       trWalk(mt.retExpr)
-      if (!tailRecMethodCalls.isEmpty){
+      if (ctx.doTailCallOptimization && !tailRecMethodCalls.isEmpty){
         ch << Label(methodLabelForTailRecursion);
       }
 
@@ -339,12 +339,14 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             } else {
               error("Look up failed for " + i.value)
             }
-            }
+          }
 
           case m :MethodCall => {
             val acc = new StringBuilder()
 
-            if (tailRecMethodCalls(m) && m.obj.getType == methSym.classSymbol.getType) {
+            if (ctx.doTailCallOptimization
+                && tailRecMethodCalls(m)
+                && m.obj.getType == methSym.classSymbol.getType) {
               info("we should rewrite this to a tail recursive call!!", m.meth)
               for (i <- 0 until m.args.length) {
                 val s = m.args(i)

@@ -79,6 +79,10 @@ object Main {
         ctx = ctx.copy(doRepl = true)
         processOption(args)
 
+      case "--Otail" :: args =>
+        ctx = ctx.copy(doTailCallOptimization = true)
+        processOption(args)
+
       case f :: args =>
         ctx = ctx.copy(files = new File(f) :: ctx.files)
         processOption(args)

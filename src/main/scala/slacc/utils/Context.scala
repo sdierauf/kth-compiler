@@ -17,5 +17,6 @@ case class Context(
   val testParse: Boolean = false,
   val testPrintAll: Boolean = false,
   val doSymbolIds: Boolean = false,
-  val doRepl: Boolean = false
+  val doRepl: Boolean = false,
+  val doTailCallOptimization: Boolean = false
 )
