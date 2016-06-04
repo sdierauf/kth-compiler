@@ -1,13 +1,4 @@
 class A {
-    method recursive(i : Int) : Unit = {
-        if (i == 0) {
-            println(strOf(i));
-        } else {
-            println(strOf(i));
-            self.recursive(i - 1);
-        };
-    }
-
     method sum(i: Int, acc: Int) : Int =  {
         if (i == 0) {
             acc
@@ -19,16 +10,6 @@ class A {
 
 method main() : Unit = {
     var temp : A;
-    var p : Int;
-    var m : Int;
-    p = {
-        m = 0;
-        m = m + 1;
-        m = m - 2;
-        m
-    };
-    //println(strOf(p));
     temp = new A();
-    temp.recursive(10000);
-    println(strOf(temp.sum(6000, 0)));
+    println(strOf(temp.sum(60000, 0)));
 }

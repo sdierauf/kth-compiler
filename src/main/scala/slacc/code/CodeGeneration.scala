@@ -97,8 +97,8 @@ object CodeGeneration extends Pipeline[Program, Unit] {
         case _ => Unit
       }
       trWalk(mt.retExpr)
-      if (ctx.doTailCallOptimization && !tailRecMethodCalls.isEmpty){
-        ch << Label(methodLabelForTailRecursion);
+      if (ctx.doTailCallOptimization && tailRecMethodCalls.nonEmpty){
+        ch << Label(methodLabelForTailRecursion)
       }
 
       val methSym = mt.getSymbol
@@ -257,7 +257,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             val mvSym = methSym.lookupUnique(a.id.value)
             val cfSym = methSym.classSymbol.lookupVar(a.id.value)
 
-            if (cfSym.isDefined && !mvSym.isDefined) {
+            if (cfSym.isDefined && mvSym.isEmpty) {
               ch << Comment("Assigning class field " + a.id.value + " in " + methSym.classSymbol.name +
                 " with type " + getPrefixForType(a.id.getType))
               ch << ArgLoad(0) //  gotta get class on the stack
@@ -312,7 +312,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             val mvSym = methSym.lookupUnique(i.value)
             val cfSym = methSym.classSymbol.lookupVar(i.value)
 
-            if (cfSym.isDefined && !mvSym.isDefined) {
+            if (cfSym.isDefined && mvSym.isEmpty) {
               ch << Comment("Getting field " + i.value)
               ch << ArgLoad(0) // get class on stack
               ch << GetField(methSym.classSymbol.name, i.value, getPrefixForType(i.getType))
@@ -347,8 +347,7 @@ object CodeGeneration extends Pipeline[Program, Unit] {
             if (ctx.doTailCallOptimization
                 && tailRecMethodCalls(m)
                 && m.obj.getType == methSym.classSymbol.getType) {
-              info("we should rewrite this to a tail recursive call!!", m.meth)
-              for (i <- 0 until m.args.length) {
+              for (i <- m.args.indices) {
                 val s = m.args(i)
                 generateExprCode(s)
                 s.getType match {
